@@ -3,3 +3,4 @@ A grid for modelling, analyse, map and visualise multidimensional and multivaria
 
 Soon to come: Paper and code. 
 
+![Antarctica_geo](https://github.com/TobbeTripitaka/grid/blob/master/fig/Antarctica_geo.png)
