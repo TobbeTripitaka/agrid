@@ -6,7 +6,7 @@ A grid for modelling, analyse, map and visualise multidimensional and multivaria
   - Cunning appraoch to process hires and lo res data quickly
   - Dask arrays
   - 3D visualisation. 
-
+  - Features for modelling, analysis and visualisation
 
 Soon to come: Paper and code. 
 
