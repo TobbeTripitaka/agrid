@@ -12,4 +12,4 @@ Soon to come: Paper and code.
 
 ![Antarctica_geo](https://github.com/TobbeTripitaka/grid/blob/master/fig/Antarctica_geo.png)
 
-![Subsampling](https://github.com/TobbeTripitaka/grid/blob/master/fig/subsampling.png)
+![Subsampling](https://github.com/TobbeTripitaka/grid/blob/master/fig/Unknown.png)
