@@ -1,6 +1,8 @@
 # grid
 A grid for modelling, analyse, map and visualise multidimensional and multivariate data. The module contains a class for generating grid objects with variables and functions that deifines a multidimetional space with spatial extent. 
 
+This shared code can be used as a package or just copy and paste snippets into your project. I've tried to keep the dependencies to a minimum and let the functions be rather indepentant. 
+
 Main features:
 
   - Named coordinates using xarray
