@@ -4,7 +4,6 @@ A grid for modelling, analyse, map and visualise multidimensional and multivaria
 This shared code can be used as a package or just copy and paste snippets into your project. I've tried to keep the dependencies to a minimum and let the functions be rather indepentant. 
 
 Main features:
-
   - Named coordinates using xarray
   - Cunning appraoch to process high resolution and low resoultion data quickly
   - Dask arrays
@@ -13,7 +12,6 @@ Main features:
   - Features for modelling, analysis and visualisation
  
 The repro contains: 
-
  - Module with class for functions and variables. 
  - Jupyter notebook tutorials:
   - 1. The grid object
