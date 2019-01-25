@@ -2,7 +2,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.4.2'
+# version = '0.4.4'
 
 import os, sys, requests
 
