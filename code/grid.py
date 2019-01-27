@@ -2,7 +2,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.4.4'
+# version = '0.4.5'
 
 import os, sys, requests
 
@@ -63,8 +63,9 @@ class Grid(object):
 
 
         # default grid
-        self.res = res
-        self.depths = depths
+        self.res = list(res)
+        self.depths = list(depths
+
 
         self.x1y1x2y2 = (left, up, right, down)
         self.wsen = (left, down, right, up)
@@ -378,7 +379,7 @@ class Grid(object):
             src_crs= None,
             source_extra = 1000,
             resampling =  None, 
-            num_threads = 2,
+            num_threads = 4,
             no_data = None,
             rgb_convert = True, 
             bit_norm = 255):
@@ -400,7 +401,8 @@ class Grid(object):
 
         if src_crs == None:
             src_crs = in_raster.crs
-            print(src_crs)
+            if self.verbose:
+                print(src_crs)
 
         if resampling == None:
             resampling = Resampling.nearest
@@ -410,7 +412,7 @@ class Grid(object):
 
         src_transform = rasterio.transform.from_bounds(*in_raster.bounds,  in_raster.shape[1], in_raster.shape[0]) #
         source = in_raster.read()
-        dst_crs = CRS.from_epsg(3031) 
+        dst_crs = CRS.from_epsg(self.crs_tgt) 
 
         dst_transform = self.transform 
         dst_array = np.zeros((in_raster.count, *self.shape2))
