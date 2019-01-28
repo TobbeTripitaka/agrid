@@ -64,7 +64,7 @@ class Grid(object):
 
         # default grid
         self.res = list(res)
-        self.depths = list(depths
+        self.depths = list(depths)
 
 
         self.x1y1x2y2 = (left, up, right, down)
@@ -168,13 +168,15 @@ class Grid(object):
             file_name = '%s.nc' % type(self).__name__
         return xr.open_dataset(file_name)
     
-    def save(self,ds,file_name='ant_grid.nc'):
+    def save(self,data= None, file_name='grid.nc'):
         '''
         Saves dataset to netCDF. 
         file_name string
         returns size of file.
         '''
-        ds.to_netcdf(file_name)
+        if data == None: 
+            data = self.ds
+        data.to_netcdf(file_name)
         return os.path.getsize(file_name)
        
     def make_info(self,ds = None,file_name=None):
