@@ -417,12 +417,17 @@ class Grid(object):
 
         dst_crs = CRS.from_epsg(self.crs_tgt) 
 
-
         if sub_sampling in (None, 0, 1):
             sub_sampling = 1
 
         raster_shape = (in_raster.count,in_raster.height//sub_sampling, in_raster.width//sub_sampling)
         source = in_raster.read(out_shape=raster_shape, window = sub_window)
+
+
+        if sub_window != None:
+            print('Window not implimented yet.')
+        else:
+            pass
 
         src_transform = rasterio.transform.from_bounds(*in_raster.bounds,  
                 raster_shape[2], raster_shape[1])
