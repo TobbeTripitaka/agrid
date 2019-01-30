@@ -4,7 +4,7 @@
 # tobias.staal@utas.edu.au
 # version = '0.4.5'
 
-import os, sys, requests
+import os, sys #, requests
 
 import numpy as np
 import xarray as xr
@@ -381,6 +381,8 @@ class Grid(object):
             src_crs= None,
             source_extra = 1000,
             resampling =  None, 
+            sub_sampling = None,
+            sub_window = None,
             num_threads = 4,
             no_data = None,
             rgb_convert = True, 
@@ -412,9 +414,19 @@ class Grid(object):
         if self.verbose:
             print('Raster bounds:', in_raster.bounds, in_raster.shape)
 
-        src_transform = rasterio.transform.from_bounds(*in_raster.bounds,  in_raster.shape[1], in_raster.shape[0]) #
-        source = in_raster.read()
+
         dst_crs = CRS.from_epsg(self.crs_tgt) 
+
+
+        if sub_sampling in (None, 0, 1):
+            sub_sampling = 1
+
+        raster_shape = (in_raster.count,in_raster.height//sub_sampling, in_raster.width//sub_sampling)
+        source = in_raster.read(out_shape=raster_shape, window = sub_window)
+
+        src_transform = rasterio.transform.from_bounds(*in_raster.bounds,  
+                raster_shape[2], raster_shape[1])
+
 
         dst_transform = self.transform 
         dst_array = np.zeros((in_raster.count, *self.shape2))
