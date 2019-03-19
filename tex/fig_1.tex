@@ -1,0 +1,196 @@
+\documentclass{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usepackage{amsmath,bm,times}
+\newcommand{\mx}[1]{\mathbf{\bm{#1}}} % Matrix command
+\newcommand{\vc}[1]{\mathbf{\bm{#1}}} % Vector command
+
+\begin{document}
+%\pagestyle{empty}
+%	\centering
+
+% Define layers to draw the block diagram
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+% Define colors
+\colorlet{a_gray}{black!20}
+\colorlet{a_brown}{black!28!brown!16}
+\colorlet{a_pale_brown}{black!16!brown!10}
+\colorlet{a_pale_gray}{black!14}
+
+% Define a few styles and constants
+\tikzstyle{block} = [draw, text width=8em, text centered, minimum height=2.2em]
+
+\tikzstyle{inputs}=[block, fill=a_pale_brown]
+\tikzstyle{outputs} = [block, fill=a_pale_brown]
+\tikzstyle{function} = [block, text width=6em, fill=a_brown]
+\tikzstyle{models} = [block, text width=6em, fill=a_gray, rounded corners]
+\tikzstyle{sub_models} = [block, text width=4em, fill=a_pale_gray]
+ \tikzstyle{sub_data} = [block, text width=4em, fill=a_pale_brown]
+    
+%anotate arrows    
+\tikzstyle{ann} = [above, text width=5em]
+
+% Define some distances
+\def\blockdist{4}
+\def\external{8}
+\def\edgedist{2.5}
+
+\tikzset{>=latex}
+
+
+% Make some macros
+\newcommand{\InputBlock}[7]{% node1, hight, label1, node2, label2, arrow1, arrow2
+	\path (model)+(-\external,#2) node (#1) [inputs] {#3};
+	\path (model)+(-\blockdist,#2) node (#4) [function] {#5};
+	\path [draw, ->] (#1.east |- #1.east) -- node [above, pos=0.2,] {\tiny{#6}} (#4.west |- #4.west);
+    \path [draw, ->] (#4.east |- #4.east) -- node [above] {\tiny{#7}} (model.west |- #4.west);
+}
+
+\newcommand{\OutputBlock}[7]{% node1, hight, label1, node2, label2, arrow1, arrow2
+	\path (model)+(\blockdist,#2) node (#1) [function] {#3};
+	\path (model)+(\external,#2) node (#4) [outputs] {#5};
+	\path [draw, ->] (model.east |- #1.west) -- node [above] {\tiny{#6}} (#1.west |- #1.west);
+	\path [draw, ->] (#1.east |- #4.west) -- node [above] {\tiny{#7}} (#4.west |- #4.west);
+}
+
+
+
+
+
+
+
+
+\begin{tikzpicture}
+	
+	%xarray dataset, in center of fig
+    \node (model) [models, minimum height=5cm, minimum width=4cm, text depth=3.5cm] {xarray Dataset};
+    
+    
+    		\path (model.140)+(1.3,0) node () [] {};
+   		 	\path[draw=black] (-1,1.3) -- (-1,0.8) -- (-0.5,0.8);
+    		\path[draw=black] (-0.8,1) -- (-1,0.8);
+    
+    		\path (model.150)+(1.02,-0.6) node (sub_model) [sub_models] {};
+    		\path (model.150)+(1.08,-0.7) node (sub_model) [sub_models] {};
+			\path (model.150)+(1.14,-0.8) node (sub_model) [sub_models] {};
+    		\path (model.150)+(1.2,-0.9) node (sub_model) [sub_models] {DataArray};
+    
+    		\path (model.150)+(1.2,-2) node (sub_data) [sub_data] {meta data};
+    
+   % inputs
+   
+   
+   \InputBlock{raster_in}{1}{Raster data}{raster_proc}{Affine transformation}{geoTiff}{numpy}
+   \InputBlock{vector_in}{0}{Vector data}{vector_proc}{Rasterization}{geoTiff}{numpy}
+
+   \InputBlock{grid_in}{-1}{Grid data}{grid_proc}{Interpolation}{netCDF}{numpy}
+   \InputBlock{ascii_in}{-2}{ASCII data}{ascii_proc}{Interpolation}{ascii}{numpy}
+   
+   \OutputBlock{raster_out_proc}{1}{rasterio}{raster_out}{Raster}{numpy}{geoTiff}
+   \OutputBlock{fig_out_proc}{0}{matplotlib}{fig_out}{Map}{numpy}{pdf}
+   \OutputBlock{3D_out_proc}{-1}{mayavi}{3D_out}{3D viz}{numpy}{screen / pdf}
+   \OutputBlock{grid_out_proc}{-2}{xarray}{grid_out}{Grid export}{xarray}{netCDF}
+   
+   
+ %  \OutputBlock{grid_out}{0}{Map}{netCDF}{}{}
+   %\OutputBlock{grid_out}{-1}{3D viz}{}{}{}
+  % \OutputBlock{grid_out}{-2}{Raster}{geoTiff}{}{}
+       
+ 
+ 
+   
+%   
+%   \path (model.150)+(-\external,1) node (raster_in) [input] {Raster data};
+%   \path (model.150)+(-\blockdist,1) node (raster) [function] {Affine transformation};
+%   \path [draw, ->] (raster_in) -- node [above, pos=0.2,] {\tiny geoTiff} (raster.west |- raster.west);
+%   \path [draw, ->] (raster) -- node [above] {\tiny{numpy}} (model.west |- raster.west);
+%    
+%    
+%   \path (model.150)+(-\external,0) node (raster_in) [input] {Raster data};
+%   \path (model.150)+(-\blockdist,0) node (raster) [function] {Affine transformation};
+%   \path [draw, ->] (raster_in) -- node [above, pos=0.2,] {\tiny geoTiff} (raster.west |- raster.west);
+%   \path [draw, ->] (raster) -- node [above] {\tiny{numpy}} (model.west |- raster.west);
+%   
+%   
+%
+%   
+%	\path (model.150)+(-\external,-2) node (raster_in) [input] {Raster data};
+%	\path (model.150)+(-\blockdist,-2) node (raster) [function] {Affine transformation};
+%	\path [draw, ->] (raster_in) -- node [above, pos=0.2,] {\tiny geoTiff} (raster.west |- raster.west);
+%	\path [draw, ->] (raster) -- node [above] {\tiny{numpy}} (model.west |- raster.west);
+%
+%
+%    
+%    
+    
+    
+
+    
+    \path (model)+(0,-3.2) node (attributes) [models, minimum height=2em] {Instance attributes};    
+    \path [draw, <->] (model) -- node {} (model.south |- attributes.north);
+
+    \path (model)+(0,3.4) node (python) [models, minimum height=2em] {Python};    
+    \path [draw, <->] (model) -- node {} (model.north |- python.south);
+   
+   \path (model)+(0,4.6) node (python_api) [models, minimum height=2em] {Python api};    
+	\path [draw, <->] (python_api) -- node {} (python_api.south |- python.north);
+ 
+    \path (attributes)+(0,-1) node (grid_attr) [models, minimum height=2em] {Grid attributes};    
+    
+    \path (grid_attr.south west)+(-0.6,-0.8) node (class) {Python class Grid};
+    
+    
+    
+%%    \path (raster.south)+(0,-4.4) node (staal) [function] {Convolution of vector lines};
+   %% \path (raster.south)+(-4.7,-4.4) node (staal_in) [input] {Vector data};
+   %% \path [draw, ->] (staal_in) -- node [above, pos=0.3,] {\tiny e.g. shapefile} (staal.west |- staal.west);
+    
+%%    \path (model.150)+(-\blockdist,-5) node (staal) [function] {Interactive visualization};
+    
+    
+    
+    
+   %  \draw [->] (model) -- node [attributes] {} + (\edgedist,0) 
+    %node[right] {};
+
+    
+   % \draw [->] (model.20) -- node [ann] {pdf} + (\edgedist,0) 
+    %    node[right] {Figure};
+    %\draw [->] (model.-25) -- node [ann] {GeoTiff} + (\edgedist,0)
+        %node [right] {GIS};
+    %\draw [->] (model.-50) -- node [ann] {global png} + (\edgedist,0) 
+     %   node[right] {Morse (ref)};
+    
+    \begin{pgfonlayer}{background}
+        % Compute a few helper coordinates
+%%%        \path (raster.west |- raster.north)+(-0.3,0.3) node (a) {};
+      %%%  \path (class.south -| model.east)+(+0.3,-0.3) node (b) {};        
+        
+        \path[fill=brown!30,rounded corners, draw=black!50]
+     (raster_proc.west |- model.north)+(-0.3,0.3) rectangle (class.south -| grid_out_proc.east)+(+0.3,+0.3) ;
+            
+        
+   
+            
+          
+        %\path (raster.north west)+(-.2,0.2) node (a) {};
+        %\path (Import.south -| raster.east)+(+0.2,-0.2) node (b) {};
+        
+        
+       % \path[fill=green!10,rounded corners, draw=black!50, dashed]
+         %   (raster.west |- raster.north)+(-0.2,0.2) rectangle (raster.east -| raster.south)+(+0.2,+0.2);
+            
+       %\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+      %(staal.west  |- staal.north)+(-0.5,0.5) rectangle (staal.east  |- staal.south)+(-0.5,-0.5);
+      
+            
+    \end{pgfonlayer}
+\end{tikzpicture}
+
+
+
+\end{document}
