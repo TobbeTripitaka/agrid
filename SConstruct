@@ -42,17 +42,11 @@ from code.agrid import *
 # os in installed with the class 
 env  = Environment(ENV = os.environ ) # only one environment used
 
-
-download_data = False
-
-
+download_data = True
 
 # Build Fig 2 Flow chart (TikZ)
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
 	source = 'tex/fig_1.tex')
-
-
-
 
 
 # Build Fig 2
@@ -62,16 +56,18 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 
 #curl http://www.site.org/image.jpg --create-dirs -o /path/to/save/images.jpg
 
-# Download test raster
+
 if download_data:
+	# Download test raster
 	url_dem_data = 'https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip'
 	env.Command('data/bedmap2_tiff.zip',None,'curl %s > $TARGET' %url_dem_data)
-env.Command('data/bedmap2_tiff/bedmap2_bed.tif','data/bedmap2_tiff.zip','unzip -n $SOURCE -d data/raw/ ')
+	env.Command('data/bedmap2_tiff/bedmap2_bed.tif','data/bedmap2_tiff.zip','unzip -n $SOURCE -d data/ ')
 
-
-
-
-# Download test polygon vector
+	# Download test poygons
+	url_dranage_data = 'http://quantarctica.tpac.org.au/Quantarctica3/Glaciology/GSFC%20Drainage/GSFC_DrainageSystems.'
+	for file_extension in ['shp', 'prj', 'shx', 'qix', 'dbf']:
+		env.Command('data/GSFC_DrainageSystems.%s'%file_extension, 
+			None,'curl %s > $TARGET' %url_dranage_data)
 
 # Make numpy noise
 
