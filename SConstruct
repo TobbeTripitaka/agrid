@@ -43,6 +43,10 @@ from code.agrid import *
 env  = Environment(ENV = os.environ ) # only one environment used
 
 
+download_data = False
+
+
+
 # Build Fig 2 Flow chart (TikZ)
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
 	source = 'tex/fig_1.tex')
@@ -59,12 +63,10 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 #curl http://www.site.org/image.jpg --create-dirs -o /path/to/save/images.jpg
 
 # Download test raster
-url_data = 'https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip'
-env.Command('data/bedmap/bedmap2_tiff.zip',None,'curl %s --create-dirs -o $TARGET' %url_data)
-env.Command(['data/raw/bedmap2_tiff/bedmap2_bed.tif',
-	'data/raw/bedmap2_tiff/bedmap2_thickness.tif']
-	'data/bedmap/bedmap2_tiff.zip','unzip $SOURCE -d ../data/raw/ ')
-
+if download_data:
+	url_dem_data = 'https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip'
+	env.Command('data/bedmap2_tiff.zip',None,'curl %s > $TARGET' %url_dem_data)
+env.Command('data/bedmap2_tiff/bedmap2_bed.tif','data/bedmap2_tiff.zip','unzip -n $SOURCE -d data/raw/ ')
 
 
 
