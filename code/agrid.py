@@ -676,13 +676,26 @@ class Grid(object):
     def extract_profile():
         return 0
 
+    def view():
+        '''
+        3D view
+
+        '''
+
+        from mayavi import mlab
+
+
+        return None
+
+
+
     def map_grid(self, im_data,
                  vmin=None,
                  vmax=None,
                  cmap='gray',
                  cbar=False,
-                 cbar_label = None,
-                 extent=None,
+                 cbar_label = '',
+                 extent= None,
                  line_c='gray',
                  line_grid_c='gray',
                  line_w=0.9,
@@ -759,7 +772,7 @@ class Grid(object):
 
             if cbar:
                 cbar = fig.colorbar(im, orientation='vertical',
-                             fraction=0.046, pad=0.04)
+                             fraction=0.046, pad=0.01)
                 cbar.set_label(cbar_label)
 
         if land_only:
@@ -1047,6 +1060,8 @@ class Grid(object):
 
         if not jucheck:
             check = there_is_file
+
+
 
 
 

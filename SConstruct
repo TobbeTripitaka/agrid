@@ -57,8 +57,9 @@ def make_maps_fig_2(target, source, env):
 	dranage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
 	ant.ds['DRANAGE'] = (('Y', 'X'), dranage)
 
-	# Use ID from dict to select segments of map. Divide with value of integer class to get 1
-	polygons = [int_map[str(x) + 'g'] for x in range(2,18)] # Grounded dranage areas in East Antarctica
+	# Use ID from dict to select segments of map. Divide with value of integer class to get 1 
+	# 2-18
+	polygons = [int_map[str(x) + 'g'] for x in range(11,18)] # Grounded dranage areas in East Antarctica
 	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRANAGE'].isin(polygons) #Select only ice in polygons
 
 	#Make maps
@@ -69,13 +70,10 @@ def make_maps_fig_2(target, source, env):
 	ant.map_grid(ant.ds['ICE'], 
 		cmap='viridis', 
 		cbar=True, 
-		cbar_label = '(m)', 
 		save_name=str(target[1]), 
 		show_map=False)
 	ant.map_grid('EAST_ICE', 
 		cmap='viridis', 
-		cbar=True, 
-		cbar_label = '(m)', 
 		save_name=str(target[2]), 
 		show_map=False)
 
@@ -87,7 +85,7 @@ def make_maps_fig_2(target, source, env):
 env.Append( BUILDERS = {'Make_Maps' : Builder(action = make_maps_fig_2)})
 
 
-download_data = True
+download_data = False
 
 # Build Fig 1 Flow chart (TikZ)
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
@@ -95,21 +93,14 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 
 
 # Build Fig 2
-env.Make_Maps(target = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf'], 
+sub_figs = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf']
+env.Make_Maps(target = sub_figs, 
 	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 'data/GSFC_DrainageSystems.shp'])
 
 fig_2= env.PDF(target = 'fig/fig_2.pdf', 
 	source = 'tex/fig_2.tex')
 
-
-
-
-#! mkdir -p ../../data/vector
-
-#! unzip -n ../../data/vector/simplified-land-polygons-complete-3857.zip -d ../../data/vector
-
-#curl http://www.site.org/image.jpg --create-dirs -o /path/to/save/images.jpg
-
+Depends(fig_2, sub_figs)
 
 if download_data:
 	# Download test raster
@@ -123,34 +114,19 @@ if download_data:
 		env.Command('data/GSFC_DrainageSystems%s'%file_extension, 
 			None,'curl -L %s > $TARGET' %(url_dranage_data+file_extension))
 
-
-
-
-
-
-
-# Make numpy noise
-
-# Toy processing
-
-# Viz examples
-# TikZ
-fig_1= env.PDF(target = 'fig/fig_2.pdf', 
-	source = 'tex/fig_2.tex')
-
-
+fig_1= env.PDF(target = 'fig/fig_1.pdf', 
+	source = 'tex/fig_1.tex')
 
 # Download bibfile 
 
 # Compile TeX
-# Depends
+meta_paper = env.PDF(target = 'staal_grid.pdf', 
+	source = 'local/staal_grid.tex')
 
-
+Depends(meta_paper,['fig/fig_1.pdf', 'fig/fig_2.pdf'])
 
 
 print('A grid for multidimensional and multivariate spatial modelling and processing. ')
-
 print('This research was supported under Australian Research Council’s Special Research Initiative for Antarctic Gateway Partnership (Project ID SR140300001).')
-
 print('Tobias Stål, Anya M Reading,\nUniversity of Tasmania\ncontact: tobias.staal@utas.edu.au ')
 print('tobias.staal@utas.edu.au')

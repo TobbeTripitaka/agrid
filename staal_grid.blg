@@ -1,0 +1,92 @@
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: staal_grid.aux
+The style file: plainnat.bst
+I couldn't open database file ../../../../ref/ref.bib
+---line 63 of file staal_grid.aux
+ : \bibdata{../../../../ref/ref
+ :                             }
+I'm skipping whatever remains of this command
+I found no database files---while reading file staal_grid.aux
+Warning--I didn't find a database entry for "frigg2018"
+Warning--I didn't find a database entry for "thompson1998handbook"
+Warning--I didn't find a database entry for "Wilson2014"
+Warning--I didn't find a database entry for "Roth2018"
+Warning--I didn't find a database entry for "qgis2015qgis"
+Warning--I didn't find a database entry for "lewis2016rapid"
+Warning--I didn't find a database entry for "Lewis2017"
+Warning--I didn't find a database entry for "de2019gempy"
+Warning--I didn't find a database entry for "bergstra2010theano"
+Warning--I didn't find a database entry for "rossum1995"
+Warning--I didn't find a database entry for "Robinson2017"
+Warning--I didn't find a database entry for "Lima2006"
+Warning--I didn't find a database entry for "Oliphant2007"
+Warning--I didn't find a database entry for "oliphant2006guide"
+Warning--I didn't find a database entry for "walt2011numpy"
+Warning--I didn't find a database entry for "mckinney2015pandas"
+Warning--I didn't find a database entry for "scipy"
+Warning--I didn't find a database entry for "pedregosa2011scikit"
+Warning--I didn't find a database entry for "whitaker2011matplotlib"
+Warning--I didn't find a database entry for "Ramachandran2011"
+Warning--I didn't find a database entry for "Beyreuther2010"
+Warning--I didn't find a database entry for "Megies2011"
+Warning--I didn't find a database entry for "robitaille2013astropy"
+Warning--I didn't find a database entry for "gillies2013"
+Warning--I didn't find a database entry for "gillies2013shapely"
+Warning--I didn't find a database entry for "jordahl2014geopandas"
+Warning--I didn't find a database entry for "staal2019boundary"
+Warning--I didn't find a database entry for "staal2019cal"
+Warning--I didn't find a database entry for "Morse2017"
+Warning--I didn't find a database entry for "2017AGUreading"
+Warning--I didn't find a database entry for "Hoyer2016"
+Warning--I didn't find a database entry for "hoyer2017xarray"
+Warning--I didn't find a database entry for "Rew1990"
+Warning--I didn't find a database entry for "gdal2018"
+Warning--I didn't find a database entry for "Hunter2007"
+Warning--I didn't find a database entry for "schober2006lvisualization"
+Warning--I didn't find a database entry for "Fretwell2013"
+Warning--I didn't find a database entry for "zwally2012antarctic"
+Warning--I didn't find a database entry for "Knight2010"
+Warning--I didn't find a database entry for "Fomel2013"
+You've used 0 entries,
+            2773 wiz_defined-function locations,
+            649 strings with 5563 characters,
+and the built_in function-call counts, 33 in all, are:
+= -- 0
+> -- 0
+< -- 0
++ -- 0
+- -- 0
+* -- 2
+:= -- 10
+add.period$ -- 0
+call.type$ -- 0
+change.case$ -- 0
+chr.to.int$ -- 0
+cite$ -- 0
+duplicate$ -- 0
+empty$ -- 1
+format.name$ -- 0
+if$ -- 1
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 0
+newline$ -- 8
+num.names$ -- 0
+pop$ -- 0
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 1
+stack$ -- 0
+substring$ -- 0
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 0
+width$ -- 0
+write$ -- 7
+(There were 2 error messages)
