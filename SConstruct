@@ -87,17 +87,23 @@ def make_maps_fig_2(target, source, env):
 env.Append( BUILDERS = {'Make_Maps' : Builder(action = make_maps_fig_2)})
 
 
-env.Make_Maps(target = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf'], 
-	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 'data/GSFC_DrainageSystems.shp'])
-
 download_data = True
 
-# Build Fig 2 Flow chart (TikZ)
+# Build Fig 1 Flow chart (TikZ)
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
 	source = 'tex/fig_1.tex')
 
 
 # Build Fig 2
+env.Make_Maps(target = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf'], 
+	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 'data/GSFC_DrainageSystems.shp'])
+
+fig_2= env.PDF(target = 'fig/fig_2.pdf', 
+	source = 'tex/fig_2.tex')
+
+
+
+
 #! mkdir -p ../../data/vector
 
 #! unzip -n ../../data/vector/simplified-land-polygons-complete-3857.zip -d ../../data/vector
