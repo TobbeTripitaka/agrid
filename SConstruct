@@ -42,6 +42,54 @@ from code.agrid import *
 # os in installed with the class 
 env  = Environment(ENV = os.environ ) # only one environment used
 
+def make_maps_fig_2(target, source, env):    
+	ant = Grid(crs=3031, res = [10*km, 10*km], left = -3100*km, up=3100*km, right = 3100*km, down = -3100*km)
+
+	#Read bedmap to grid
+	ant.ds['ICE'] = (('Y', 'X'), 
+                ant.read_raster(str(source[0])) )
+
+	# Set nodata
+	no_data = 32767.
+	ant.ds['ICE'] = ant.ds['ICE'].where(ant.ds['ICE'] != no_data)  
+
+	# Read polygons, map string attribute to integer as burn values. Map of integer values saved as dict
+	dranage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
+	ant.ds['DRANAGE'] = (('Y', 'X'), dranage)
+
+	# Use ID from dict to select segments of map. Divide with value of integer class to get 1
+	polygons = [int_map[str(x) + 'g'] for x in range(2,18)] # Grounded dranage areas in East Antarctica
+	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRANAGE'].isin(polygons) #Select only ice in polygons
+
+	#Make maps
+	ant.map_grid(ant.ds['DRANAGE'], 
+		cmap='Spectral', 
+		save_name=str(target[0]), 
+		show_map=False)
+	ant.map_grid(ant.ds['ICE'], 
+		cmap='viridis', 
+		cbar=True, 
+		cbar_label = '(m)', 
+		save_name=str(target[1]), 
+		show_map=False)
+	ant.map_grid('EAST_ICE', 
+		cmap='viridis', 
+		cbar=True, 
+		cbar_label = '(m)', 
+		save_name=str(target[2]), 
+		show_map=False)
+
+	# Compute volume
+	print(int(ant.ds['EAST_ICE'].sum()*np.prod(ant.res)/km**3),'km3')
+	return None
+
+# Define Python functions as builders
+env.Append( BUILDERS = {'Make_Maps' : Builder(action = make_maps_fig_2)})
+
+
+env.Make_Maps(target = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf'], 
+	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 'data/GSFC_DrainageSystems.shp'])
+
 download_data = True
 
 # Build Fig 2 Flow chart (TikZ)
@@ -64,10 +112,16 @@ if download_data:
 	env.Command('data/bedmap2_tiff/bedmap2_bed.tif','data/bedmap2_tiff.zip','unzip -n $SOURCE -d data/ ')
 
 	# Download test poygons
-	url_dranage_data = 'http://quantarctica.tpac.org.au/Quantarctica3/Glaciology/GSFC%20Drainage/GSFC_DrainageSystems.'
-	for file_extension in ['shp', 'prj', 'shx', 'qix', 'dbf']:
-		env.Command('data/GSFC_DrainageSystems.%s'%file_extension, 
-			None,'curl %s > $TARGET' %url_dranage_data)
+	url_dranage_data = 'http://quantarctica.tpac.org.au/Quantarctica3/Glaciology/GSFC%20Drainage/GSFC_DrainageSystems'
+	for file_extension in ['.shp', '.prj', '.shx', '.dbf', '.qix']:
+		env.Command('data/GSFC_DrainageSystems%s'%file_extension, 
+			None,'curl -L %s > $TARGET' %(url_dranage_data+file_extension))
+
+
+
+
+
+
 
 # Make numpy noise
 

@@ -4,3 +4,5 @@
 .sconsign.dblite
 #
 data/*
+#
+local/*

@@ -277,6 +277,7 @@ class Grid(object):
                      burn_val=None,
                      map_to_int = False, 
                      save_map_to_text = None, 
+                     return_map = True,
                      fill_value = np.nan):
         '''
         
@@ -289,6 +290,8 @@ class Grid(object):
         str_to_int  :   Converts string attribute to integer classes. 
                             If False, integer will result in error
         save_map_to_text : Save map to textfile. E.g. attr_to_value.csv
+        return_map  :   Set if function returns dict of integer map
+
 
         Thanks: 
         https://gis.stackexchange.com/questions/216745/get-polygon-shapefile-in-python-shapely-by-clipping-linearring-with-linestring/216762
@@ -344,7 +347,13 @@ class Grid(object):
                 transform=self.transform,
                 fill=fill_value,
                 all_touched=True)
-        return data
+
+        
+        
+        if return_map == True:
+            return data, moby_dict
+        else:
+            return data
 
     def read_grid(self, f_name,
                   xyz=('x', 'y', 'z'),
@@ -672,6 +681,7 @@ class Grid(object):
                  vmax=None,
                  cmap='gray',
                  cbar=False,
+                 cbar_label = None,
                  extent=None,
                  line_c='gray',
                  line_grid_c='gray',
@@ -748,8 +758,9 @@ class Grid(object):
                           zorder=5)
 
             if cbar:
-                fig.colorbar(im, orientation='vertical',
+                cbar = fig.colorbar(im, orientation='vertical',
                              fraction=0.046, pad=0.04)
+                cbar.set_label(cbar_label)
 
         if land_only:
             pass
@@ -769,7 +780,7 @@ class Grid(object):
         if save_name != None:
             plt.savefig(save_name, transparent=True,
                         bbox_inches='tight', pad_inches=0)
-            print('Saved as', save_name)
+            print('Saved to:', save_name)
 
         if show_map:
             plt.show()
@@ -1034,7 +1045,7 @@ class Grid(object):
 
     def download(url, filename, check=False):
 
-        if not check:
+        if not jucheck:
             check = there_is_file
 
 
