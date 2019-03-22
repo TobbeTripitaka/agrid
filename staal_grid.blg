@@ -19,7 +19,6 @@ Warning--I didn't find a database entry for "de2019gempy"
 Warning--I didn't find a database entry for "bergstra2010theano"
 Warning--I didn't find a database entry for "rossum1995"
 Warning--I didn't find a database entry for "Robinson2017"
-Warning--I didn't find a database entry for "Lima2006"
 Warning--I didn't find a database entry for "Oliphant2007"
 Warning--I didn't find a database entry for "oliphant2006guide"
 Warning--I didn't find a database entry for "walt2011numpy"
@@ -50,7 +49,7 @@ Warning--I didn't find a database entry for "Knight2010"
 Warning--I didn't find a database entry for "Fomel2013"
 You've used 0 entries,
             2773 wiz_defined-function locations,
-            649 strings with 5563 characters,
+            647 strings with 5547 characters,
 and the built_in function-call counts, 33 in all, are:
 = -- 0
 > -- 0

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.13)  20 MAR 2019 13:51
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.13)  22 MAR 2019 23:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -453,50 +453,58 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-<../fig/ice.pdf, id=4, 867.11705pt x 792.82999pt>
-File: ../fig/ice.pdf Graphic file (type pdf)
-<use ../fig/ice.pdf>
-Package pdftex.def Info: ../fig/ice.pdf  used on input line 17.
-(pdftex.def)             Requested size: 311.1828pt x 284.52756pt.
-<../fig/selected.pdf, id=5, 867.24pt x 867.24pt>
-File: ../fig/selected.pdf Graphic file (type pdf)
-<use ../fig/selected.pdf>
-Package pdftex.def Info: ../fig/selected.pdf  used on input line 21.
-(pdftex.def)             Requested size: 284.52274pt x 284.52756pt.
-<../fig/dranage.pdf, id=6, 867.24pt x 867.24pt>
+<../fig/oblique_view.png, id=4, 1003.75pt x 1003.75pt>
+File: ../fig/oblique_view.png Graphic file (type png)
+<use ../fig/oblique_view.png>
+Package pdftex.def Info: ../fig/oblique_view.png  used on input line 15.
+(pdftex.def)             Requested size: 327.21042pt x 327.20668pt.
+<../fig/dranage.pdf, id=5, 867.24pt x 867.24pt>
 File: ../fig/dranage.pdf Graphic file (type pdf)
 <use ../fig/dranage.pdf>
-Package pdftex.def Info: ../fig/dranage.pdf  used on input line 26.
+Package pdftex.def Info: ../fig/dranage.pdf  used on input line 22.
+(pdftex.def)             Requested size: 284.52274pt x 284.52756pt.
+<../fig/ice.pdf, id=6, 867.29771pt x 787.9932pt>
+File: ../fig/ice.pdf Graphic file (type pdf)
+<use ../fig/ice.pdf>
+Package pdftex.def Info: ../fig/ice.pdf  used on input line 28.
+(pdftex.def)             Requested size: 313.16655pt x 284.52756pt.
+<../fig/selected.pdf, id=7, 867.24pt x 867.24pt>
+File: ../fig/selected.pdf Graphic file (type pdf)
+<use ../fig/selected.pdf>
+Package pdftex.def Info: ../fig/selected.pdf  used on input line 34.
 (pdftex.def)             Requested size: 284.52274pt x 284.52756pt.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 32.
+(Font)              <7> on input line 42.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 32.
+(Font)              <5> on input line 42.
 
 [1
 
- <../fig/ice.pdf> <../fig/selected.pdf
+{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <../fig/
+oblique_view.png (PNG copy)> <../fig/dranage.pdf> <../fig/ice.pdf
+
+pdfTeX warning: pdflatex (file ../fig/ice.pdf): PDF inclusion: multiple pdfs wi
+th page group included in a single page
+> <../fig/selected.pdf
 
 pdfTeX warning: pdflatex (file ../fig/selected.pdf): PDF inclusion: multiple pd
 fs with page group included in a single page
-> <../fig/dranage.pdf
-
-pdfTeX warning: pdflatex (file ../fig/dranage.pdf): PDF inclusion: multiple pdf
-s with page group included in a single page
 >] (/Users/tobiasstal/proj/grid/grid/tex/fig_2.aux) ) 
 Here is how much of TeX's memory you used:
- 11799 strings out of 492649
- 241772 string characters out of 6129622
- 276401 words of memory out of 5000000
- 15464 multiletter control sequences out of 15000+600000
- 4252 words of font info for 16 fonts, out of 8000000 for 9000
+ 11810 strings out of 492649
+ 241967 string characters out of 6129622
+ 277401 words of memory out of 5000000
+ 15471 multiletter control sequences out of 15000+600000
+ 4546 words of font info for 17 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,9n,56p,407b,860s stack positions out of 5000i,500n,10000p,200000b,80000s
-
-Output written on fig_2.pdf (1 page, 706250 bytes).
+</usr/local/texlive/2018/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmss12.pfb></usr/local/texlive/2018/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb>
+Output written on fig_2.pdf (1 page, 1060453 bytes).
 PDF statistics:
- 42 PDF objects out of 1000 (max. 8388607)
- 22 compressed objects within 1 object stream
+ 51 PDF objects out of 1000 (max. 8388607)
+ 28 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 28 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 33 words of extra memory for PDF output out of 10000 (max. 10000000)
 

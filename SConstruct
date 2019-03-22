@@ -9,7 +9,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.5.0'
+# version = '0.2.0'
 
 # https://doi.org/10.5281/zenodo.2553966
 #
@@ -37,7 +37,7 @@
 #SOFTWARE.#
 
 # Install the class and dependencies
-from code.agrid import *
+from grid_code.agrid import *
 
 # os in installed with the class 
 env  = Environment(ENV = os.environ ) # only one environment used
@@ -59,15 +59,20 @@ def make_maps_fig_2(target, source, env):
 
 	# Use ID from dict to select segments of map. Divide with value of integer class to get 1 
 	# 2-18
-	polygons = [int_map[str(x) + 'g'] for x in range(11,18)] # Grounded dranage areas in East Antarctica
+	polygons = [int_map[str(x) + 'g'] for x in range(8,20)] # Grounded dranage areas
 	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRANAGE'].isin(polygons) #Select only ice in polygons
 
+	ant.ds['DEM'] = (('Y', 'X'), 
+                ant.read_raster(str(source[2])) )
+	ant.ds['DEM'] = ant.ds['DEM'].where(ant.ds['DEM'] != no_data)  
+
+
 	#Make maps
-	ant.map_grid(ant.ds['DRANAGE'], 
+	ant.map_grid('DRANAGE', 
 		cmap='Spectral', 
 		save_name=str(target[0]), 
 		show_map=False)
-	ant.map_grid(ant.ds['ICE'], 
+	ant.map_grid('ICE', 
 		cmap='viridis', 
 		cbar=True, 
 		save_name=str(target[1]), 
@@ -76,6 +81,13 @@ def make_maps_fig_2(target, source, env):
 		cmap='viridis', 
 		save_name=str(target[2]), 
 		show_map=False)
+	ant.oblique_view('DEM', 
+		save_name = str(target[3]),
+		vmin= 0, vmax=4200, 
+		cmap='bone' ,
+		azimuth=180,
+		roll=-90)
+
 
 	# Compute volume
 	print(int(ant.ds['EAST_ICE'].sum()*np.prod(ant.res)/km**3),'km3')
@@ -93,9 +105,11 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 
 
 # Build Fig 2
-sub_figs = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf']
+sub_figs = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf', 'fig/oblique_view.png', 'fig/oblique_top.png']
 env.Make_Maps(target = sub_figs, 
-	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 'data/GSFC_DrainageSystems.shp'])
+	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 
+	'data/GSFC_DrainageSystems.shp', 
+	'data/bedmap2_tiff/bedmap2_surface.tif' ])
 
 fig_2= env.PDF(target = 'fig/fig_2.pdf', 
 	source = 'tex/fig_2.tex')
