@@ -134,7 +134,7 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 # Download bibfile 
 
 # Compile TeX
-meta_paper = env.PDF(target = 'staal_grid.pdf', 
+meta_paper = env.PDF(target = 'local/staal_grid.pdf', 
 	source = 'local/staal_grid.tex')
 
 Depends(meta_paper,['fig/fig_1.pdf', 'fig/fig_2.pdf'])
