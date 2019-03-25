@@ -47,11 +47,7 @@ def make_maps_fig_2(target, source, env):
 
 	#Read bedmap to grid
 	ant.ds['ICE'] = (('Y', 'X'), 
-                ant.read_raster(str(source[0])) )
-
-	# Set nodata
-	no_data = 32767.
-	ant.ds['ICE'] = ant.ds['ICE'].where(ant.ds['ICE'] != no_data)  
+                ant.read_raster(str(source[0]), no_data = 32767.) )
 
 	# Read polygons, map string attribute to integer as burn values. Map of integer values saved as dict
 	dranage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
@@ -63,8 +59,7 @@ def make_maps_fig_2(target, source, env):
 	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRANAGE'].isin(polygons) #Select only ice in polygons
 
 	ant.ds['DEM'] = (('Y', 'X'), 
-                ant.read_raster(str(source[2])) )
-	ant.ds['DEM'] = ant.ds['DEM'].where(ant.ds['DEM'] != no_data)  
+                ant.read_raster(str(source[2]), no_data = 32767.) )
 
 
 	#Make maps
