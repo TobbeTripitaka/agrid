@@ -4,8 +4,6 @@
 # agrid
 A grid for modelling, analyse, map and visualise multidimensional and multivariate data. The module contains a class for generating grid objects with variables and functions that defines a multidimensional space with spatial extent. 
 
-This shared code can be used as a package or just copy and paste snippets into your project. I've tried to keep the dependencies to a minimum and let the functions be rather independent. 
-
 Main features:
   - Named coordinates using xarray
   - Cunning approach to process high resolution and low resolution data quickly
@@ -27,11 +25,11 @@ To come soon:
  - Software Meta-paper
  - More code
 
+---
 
 
-The code can be uses as a package, or as snippets to import to any project. 
 
-With some magic functions: 
+This shared code can be used as a package or just copy and paste snippets into your project. I've tried to keep the dependencies to a minimum and let the functions be rather independent. 
 
 Future development: 
 
