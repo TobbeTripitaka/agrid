@@ -3,7 +3,7 @@
 Here are a few tutorials that hopefully will explain the grid in particular, and maybe of some help to understand the used packages in general. 
 
  - 1 The grid object
-   - This notebook explains how the grid object is used, how the xarray dataset is incorperated and some basic functionallity
+   - This notebook explains how the grid object is used, how the xarray dataset is incorporated and some basic functionality
   
  - 2 Import data
    - This notebook shows a number of examples of how to import data in various formats
@@ -18,7 +18,7 @@ Here are a few tutorials that hopefully will explain the grid in particular, and
  
  - JORS Copy of code to generate figures in meta-paper (In prep.). 
  
- Special feautures:
+ Special features:
  
  - S1 Processing and visualisation for Staal et al (in prep.)
  
