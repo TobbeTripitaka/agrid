@@ -37,6 +37,8 @@ import numpy as np
 import xarray as xr
 import pyproj as proj
 
+import json
+
 import pandas as pd
 import geopandas as gpd
 
@@ -199,13 +201,30 @@ class Grid(object):
         data.to_netcdf(file_name)
         return os.path.getsize(file_name)
 
-    def save_info(self, ds=None, file_name=None):
+    def save_info(self, ds=None, file_name='info.txt', write_coords = False):
+        '''
+        Save json file with parameters
+        write_coords writes complete list of coordinates     
+
+        '''
         if ds == None:
             ds = self.ds
         if file_name == None:
-            file_name = 'info_%s.txt' % self.name
-        np.savetxt(file_name, [], header='Info %s:' % str(ds))
-        return 0
+            file_name = 'info.txt'
+
+        info = self.__dict__.copy()
+        info['ds'] = 'xarray dataset'
+        info['coord_d_type'] = str(info['coord_d_type'])
+        for array in ['xv', 'yv', 'lon', 'lat']:
+            if write_coords:
+                info[array] = info[array].tolist()
+            else:
+                info[array] = info[array][[0,0,-1,-1],[0,-1,0,-1]].tolist()
+
+        with open(file_name, 'w') as outfile:
+            json.dump(info, outfile, indent=4, ensure_ascii=False)
+
+        return info
 
     def land_mask(self, polygon_frame=None, polygon_res=None, all_touched=True, land_true=True):
         '''
@@ -391,9 +410,6 @@ class Grid(object):
             x = self._set_meridian(x)
 
         xx, yy = np.meshgrid(x, y)
-
-
-
         xv, yv = proj.transform(proj.Proj(init='epsg:%s' % crs_src),
                                 proj.Proj(init='epsg:%s' % crs), xx, yy)
 
@@ -420,6 +436,7 @@ class Grid(object):
                    y_col=1,
                    data_col=2,
                    interpol='linear',
+                   no_data = None,
                    only_frame=True,
                    crs_src=None,
                    crs=None,
@@ -427,11 +444,11 @@ class Grid(object):
                    skiprows = 0
                    ):
         '''
-            Function reads textfile, e.g. csv, to grid. 
-            f_name      : String, name of file to import
-            x_col       : index for column holding x values in given crs
-            y_col       : index for column holding y values in given crs
-            data_col    : index for column with data values
+        Function reads textfile, e.g. csv, to grid. 
+        f_name      : String, name of file to import
+        x_col       : index for column holding x values in given crs
+        y_col       : index for column holding y values in given crs
+        data_col    : index for column with data values
 
         '''
         if crs == None:
@@ -557,8 +574,7 @@ class Grid(object):
         '''
         return None
 
-    def grid_to_raster(self,
-                       ds,
+    def grid_to_raster(self, ds,
                        raster_name='raster_export.tif'
                        ):
         '''
@@ -575,68 +591,51 @@ class Grid(object):
         out_raster.close()
         return None
 
-    def frame_to_polygon(self,
-                         file_name,
-                         grid_driver='ESRI Shapefile',
-                         frame_crs=None,
-                         coordinates=None,
-                         proj_crs=None,
-                         id_attribute=1):
+    # def frame_to_polygon(self,
+    #                      file_name,
+    #                      grid_driver='ESRI Shapefile',
+    #                      frame_crs=None,
+    #                      coordinates=None,
+    #                      proj_crs=None,
+    #                      id_attribute=1):
+    #     '''
+    #     Save outer frame as polygon. 
+    #     '''
 
-        from shapely.geometry import Polygon
+    #     from shapely.geometry import Polygon
 
-        if proj_crs == None:
-            proj_crs = 3031
+    #     if proj_crs == None:
+    #         proj_crs = 3031
 
-        if frame_crs == None:
-            frame_crs = 4326
+    #     if frame_crs == None:
+    #         frame_crs = 4326
 
-        if coordinates == None:
-            coordinates = [(self.left, self.up),
-                           (self.right, self.upp),
-                           (self.right, self.down),
-                           (self.left, self.down)]
+    #     if coordinates == None:
+    #         coordinates = [(self.left, self.up),
+    #                        (self.right, self.upp),
+    #                        (self.right, self.down),
+    #                        (self.left, self.down)]
 
-        ds = gpd.GeoDataFrame()
-        ds.crs = '+init=epsg:%s' % proj_crs
-        ds.loc[0, 'geometry'] = Polygon(coordinates)
+    #     ds = gpd.GeoDataFrame()
+    #     ds.crs = '+init=epsg:%s' % proj_crs
+    #     ds.loc[0, 'geometry'] = Polygon(coordinates)
 
-        ds = ds.to_crs('+init=epsg:%s' % frame_crs)
-        ds.to_file(file_name, driver='ESRI Shapefile')
-        return ds
+    #     ds = ds.to_crs('+init=epsg:%s' % frame_crs)
+    #     ds.to_file(file_name, driver='ESRI Shapefile')
+    #     return ds
 
-        # coordinates = [(self.left, self.up),
-        #        (self.right, self.up),
-        #        (self.right, self.down),
-        #        (self.left, self.down)]
+    # def frame_to_point():
+    #     '''
+    #     Save points in center of each cell. 
 
-        #poly = Polygon(coordinates)#
+    #     '''
+    #     from shapely.geometry import Point
 
-#
-
- #       ds = gpd.GeoDataFrame()
-  #      ds.loc[0, 'geometry'] = poly
-   #     ds.crs = {'init': 'epsg:3031', 'no_defs': True}
-
-    #    df = gpd.GeoDataFrame(poly, geometry='geometry')
-     #   df.loc[0, 'geometry'] = poly
-      #  df.crs = {'init': 'EPSG:%s'%self.crs}
-       # df.to_file(file_name, driver=grid_driver)
-
-        # return None
-
-    def frame_to_point():
-        '''
-        Save points in center of each cell. 
-
-        '''
-        from shapely.geometry import Point
-
-        return None
+    #     return None
 
     def frame_to_ascii(self, 
                     out_data, 
-                    asc_file_name = 'agrid.asc',
+                    asc_file_name = 'corners.txt',
                     center = True,
                     fmt = '%6.2f', 
                     no_data = -9999):
@@ -667,13 +666,15 @@ class Grid(object):
            comments = '', 
            fmt=fmt)
 
-
-
         return os.path.getsize(asc_file_name)
 
 
 # Vizualisations
     def extract_profile():
+        '''
+        To be implemented from Staal et al 2019: extract profiles. 
+        '''
+
         return 0
 
     def oblique_view(self, data, 
@@ -689,6 +690,13 @@ class Grid(object):
         cmap = 'terrain'):
         '''
         3D view
+        azimut :    Camera direction
+        elevation:  Camera height
+        distance :  Camera distance
+        roll    :   Camera rotation
+        bgcolor : Tuple of lenght 3, values from 0 to 1 RGB
+        warp_scale :    Enhance z, lower value increase the distorion
+        vmin and vmax : Set color range
 
         '''
 
@@ -703,20 +711,10 @@ class Grid(object):
         if vmax == None:
             vmax = np.nanpercentile(data, 99.9)
 
-        #s = mlab.figure(size=(900, 900), bgcolor=bgcolor)
-        #mlab.options.offscreen = True
-        #mlab.surf(data, colormap=cmap, warp_scale=warp_scale,
-        #    vmin=vmin, vmax=vmax)
-
-        #mlab.view(azimuth=azimuth, elevation=elevation, distance=distance, roll=roll)
-        #mlab.savefig(save_name, figure = s)
-        #mlab.close(all=True)
-
         mlab.options.offscreen = True
 
         mlab.figure(size=(1000, 1000), bgcolor= bgcolor)
         mlab.clf()
-        
 
         mlab.surf(data, warp_scale=warp_scale, colormap=cmap, vmin=vmin, vmax=vmax)
 
@@ -741,7 +739,7 @@ class Grid(object):
                  circ_map=False,
                  figsize=None,
                  land_only=True,
-                 ocean_color='w',
+                 ocean_color='white',
                  no_land_fill=np.nan,
                  title=None,
                  save_name=None,
@@ -751,6 +749,36 @@ class Grid(object):
                  draw_grid=True,
                  par=None,
                  mer=None):
+
+        '''
+        Make map view for print or display. 
+
+
+        vmin, vmax  :   Set range oc colormap. If not set 0.1 percentille is used
+        cmap        :   Select colormap
+        cbar        :   Boolean colorbar or not
+        extent      :   Select a different extent than the object (left, right, down, up)
+        line_c      :   Color of lines
+        line_grid_c :   Color of gridlines
+        line_w      :   Whidth of lines 
+        circ_map    :   If selected, map is cropped to a circle around the center as 
+                        a hub. Sometimes visually appealing, this is a leftover from early 
+                        use of the code for only Antarctic continental scale maps. 
+        figsize     :   Size of figure in cm Default is 12cm high
+        land_only   :   Crop oceans (In furure versions)
+        ocean_color :   Colour of oceans
+        no_land_fill:   Value for no land
+        show_map    :   Off if only saving, good for scripting
+        map_res     :   'c'is fast but not detailed, 'i' in between, 
+                            'f' is slow and detaile. For 'i' and finer hires data is needed
+        draw_coast  :   If True, Basemab coastline is drawn. 
+        draw_grid   :   Draw parallells and meridieans
+        par         :   List of Parallels
+        mer         :   List of Meridians        
+        '''
+
+
+
 
         def create_circular_mask(h, w, center=None, radius=None):
             center = [int(w / 2), int(h / 2)]
@@ -815,6 +843,7 @@ class Grid(object):
                 cbar.set_label(cbar_label)
 
         if land_only:
+            #
             pass
 
         if draw_coast:
@@ -839,7 +868,7 @@ class Grid(object):
 
         return None
 
-    def look(self, rasters, file_name='look.png',
+    def look(self, rasters, save_name='look.png',
              interp_method=None,
              color_map='viridis',
              show=True,
@@ -851,6 +880,8 @@ class Grid(object):
              ):
         """
         Quick look of 2D slices. 
+        Rather undeveloped function. 
+
         """
 
         if len(rasters) > max_n_plots:
@@ -885,7 +916,7 @@ class Grid(object):
 
         fig.tight_layout(pad=0)
         if save:
-            fig.savefig(file_name, transparent=True,
+            fig.savefig(save_name, transparent=True,
                         bbox_inches='tight', pad_inches=0)
 
         if show:
@@ -900,7 +931,8 @@ class Grid(object):
                invert_yaxis=False,
                sub_sample=4):
         '''
-        Function displays 3D grid with slider to 
+        Function displays 3D grid with slider. 
+        This is also just a dev test. 
 
         '''
         import holoviews as hv
@@ -917,6 +949,7 @@ class Grid(object):
 
 
 # Features
+# Feauters for special use for studies. 
 
     def read_model(self,
                    shape_file_name,
@@ -1096,11 +1129,31 @@ class Grid(object):
 
 
     def download(url, filename, check=False):
+        '''
+        Class function to download data to default path.
 
-        if not jucheck:
+
+
+        '''
+
+        # Check if already exist
+        if not check:
             check = there_is_file
 
+        # Download if not
 
+        # To (named) temp
+
+        # Check if zip
+            #Uncompress
+
+        # Check if tar
+            # Uncompress
+        #
+
+        #Check that good
+
+        
 
 
 
