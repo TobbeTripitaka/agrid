@@ -29,30 +29,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.#
 
-
 import os
 import sys
-
+import re
+import json
 import numpy as np
 import xarray as xr
 import pyproj as proj
-
-import json
-
-import pandas as pd
-import geopandas as gpd
-
-import rasterio
-from rasterio.crs import *
-from rasterio import features
-from rasterio.warp import Resampling
-from affine import Affine
-
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
 from scipy import interpolate 
 import scipy.ndimage
+
+import pandas as pd
+import geopandas as gpd
+
+from affine import Affine
+import rasterio
+from rasterio.crs import *
+from rasterio import features
+from rasterio.warp import Resampling
+from rasterio.plot import reshape_as_image
+
+###
+# Mayavi and Bokeh are imported in methods, when needed. 
 
 km = 1000
 
@@ -144,10 +145,19 @@ class Grid(object):
         self.ds.coords['XV'] = (('Y', 'X'), self.xv.astype(coord_d_type))
         self.ds.coords['YV'] = (('Y', 'X'), self.yv.astype(coord_d_type))
 
+        if isinstance(crs, int):
+            crs = '+init=epsg:' + str(crs)
+
+        if isinstance(crs_src, int):
+            crs_src = '+init=epsg:' + str(crs_src)
+
         self.crs_src = crs_src
         self.crs = crs
 
-        self.lon, self.lat = proj.transform(proj.Proj(init='epsg:%s' % crs),
+        print(type(self.crs), self.crs)
+        print(type(self.crs_src), self.crs_src)
+
+        self.lon, self.lat = proj.transform(proj.Proj(self.crs),
                                             proj.Proj(init='epsg:4326'), self.xv, self.yv)
 
         self.ds.coords['lat'] = (('Y', 'X'), self.lat.astype(coord_d_type))
@@ -194,6 +204,19 @@ class Grid(object):
             x_array[x_array < 0] = x_array[x_array < 0] + 360
         return x_array
 
+
+    def _user_to_array(input):
+        '''Reads user input to numpy array. 
+        '''
+        if isinstance(im_data, str):
+            im_data = self.ds[im_data].values
+        elif isinstance(y, (np.ndarray, np.generic) ):
+            pass # if numpy array
+        else:
+            im_data = im_data.values # if dataframe
+
+        return im_data
+
     def save(self, data=None, file_name='grid.nc'):
         '''
         Saves dataset to netCDF. 
@@ -206,12 +229,10 @@ class Grid(object):
         return os.path.getsize(file_name)
 
     def save_info(self, ds=None, file_name='info.txt', write_coords = False, 
-        *args, **kwargs):
-        '''
-        Save json file with instance parameters
-        write_coords writes complete list of coordinates     
-
-        '''
+        **kwargs):
+        '''Save json file with instance parameters
+        Keyword arguments:
+        write_coords -- writes complete list of coordinates '''
         if ds == None:
             ds = self.ds
         if file_name == None:
@@ -227,14 +248,12 @@ class Grid(object):
                 info[array] = info[array][[0,0,-1,-1],[0,-1,0,-1]].tolist()
 
         with open(file_name, 'w') as outfile:
-            json.dump(info, outfile, indent=4, ensure_ascii=False,*args, **kwargs)
+            json.dump(info, outfile, indent=4, ensure_ascii=False, **kwargs)
 
         return info
 
     def land_mask(self, polygon_frame=None, polygon_res=None, all_touched=True, land_true=True):
-        '''
-        Create a 2D array with only land 
-        '''
+        '''Create a 2D array with only land '''
 
         if polygon_frame == None:
             pass
@@ -252,20 +271,22 @@ class Grid(object):
                      interpol='linear',
                      axis=2,
                      bounds_error=False, 
-                     *args, **kwargs):
-        '''
-        Function interpolate dimension into new defined depth from coord or list. 
-        array : np.array, list or dataset to be interpolated at new points
+                     **kwargs):
+        '''Interpolate dimension into new defined depth from coord or list. 
+        
+        Keyword arguments:
+        array -- np.array, list or dataset to be interpolated at new points
                     if array is a string, it will be converted to data frame in self
-        old :   coord to interpolate
-        new :   coord to interpolate to
-        interpol :  interpolation method, e.g. nearest, linear or cubic
-        fill_value :    extrapolation value
+        old -- coord to interpolate
+        new -- coord to interpolate to
+        interpol -- interpolation method, e.g. nearest, linear or cubic
+        fill_value -- extrapolation value
         '''
         for label in [array, old, new]:
             if isinstance(label, str):
                 label = self.ds[label].values
-                print(array, old, new)
+                if verbose:
+                    print(array, old, new)
 
         return interpolate.interp1d(old,
                                     array,
@@ -273,16 +294,18 @@ class Grid(object):
                                     bounds_error=bounds_error,
                                     kind=interpol,
                                     fill_value=fill_value, 
-                                    *args, **kwargs)(new)
+                                    **kwargs)(new)
 
     def fold_to_low_res(self, large, small):
-        '''
-        Function takes high resolution 2D array (large) and places subarrays in additional dimensions. 
+        '''Takes high resolution 2D array (large) and places subarrays in additional dimensions. 
+
         The output array have the same resolution as the second array (small) and can be computed together. 
         nx and nn of large must be a multiple of nx, and ny of small.
 
-        large   :   is high res array
-        small   :     low res array
+        Keyword arguments:
+        large -- is high res array
+        small -- low res array
+
         Returns folded high res with shape[:2] same as small.
         '''
         res = (np.shape(large)[0] // np.shape(small)[0],
@@ -291,14 +314,14 @@ class Grid(object):
                                     np.shape(small.values)[1], res[1]).transpose(0, 2, 1, 3)
 
     def flatten_to_high_res(self, folded, large):
-        '''
-        Function flatten a processed array back to high dimension. Reverse of fold_to_low_res. 
+        '''Flatten a processed array back to high dimension. Reverse of fold_to_low_res. 
+        
         Returns a high resolution array. 
         '''
         return folded.transpose(0, 2, 1, 3).reshape(np.shape(large.values)[0],
                                                     np.shape(large.values)[1])
 
-# Import data
+    # Import data
     def assign_shape(self, shape_file, attribute=None,
                      z_dim=False, z_max='z_max', z_min='z_min',
                      all_touched=True, 
@@ -307,27 +330,29 @@ class Grid(object):
                      save_map_to_text = None, 
                      return_map = True,
                      fill_value = np.nan, 
-                     *args, **kwargs):
-        '''
+                     **kwargs):
+        '''Rasterize vector polygons to grid 
         
-        attribute   :   Attribute values to be burned to raster
-        z_dim       :   Make 3D raster with attributes assigned to layers
-        z_min       :   Label for attribute that defines min... 
-        z_max       :   ...and max depths
-        all_touched :   Burn value if cell touches or only if crossing centre
-        burn_val    :   Replaces attribute value
-        str_to_int  :   Converts string attribute to integer classes. 
+        Keyword arguments:
+        attribute -- Attribute values to be burned to raster
+        z_dim -- Make 3D raster with attributes assigned to layers
+        z_min -- Label for attribute that defines min... 
+        z_max -- ...and max depths
+        all_touched -- Burn value if cell touches or only if crossing centre
+        burn_val -- Replaces attribute value
+        str_to_int -- Converts string attribute to integer classes. 
                             If False, integer will result in error
-        save_map_to_text : Save map to text file. E.g. attr_to_value.csv
-        return_map  :   Set if function returns dict of integer map
+        save_map_to_text -- Save map to text file. E.g. attr_to_value.csv
+        return_map -- Set if function returns dict of integer map
+
+        Returns numpy array.
 
 
         Thanks: 
         https://gis.stackexchange.com/questions/216745/get-polygon-shapefile-in-python-shapely-by-clipping-linearring-with-linestring/216762
         '''
 
-        shape = gpd.read_file(shape_file).to_crs(
-            {'init': 'epsg:%s' % self.crs})
+        shape = gpd.read_file(shape_file).to_crs(self.crs)
 
         if burn_val != None:
             shape[attribute] = [burn_val] * len(shape)
@@ -340,7 +365,6 @@ class Grid(object):
             if save_map_to_text != None:
                 pd.DataFrame(list(moby_dict.items() )).to_csv(save_map_to_text)
             shape[attribute] = [moby_dict[v] for v in shape[attribute]]
-
 
         # With z_dim, a 3D grid can be formed where attributes are written to layers between z_min and Z_max
         if z_dim:
@@ -360,7 +384,7 @@ class Grid(object):
                     transform=self.transform,
                     fill=fill_value,
                     all_touched=all_touched,
-                    *args, **kwargs)
+                    **kwargs)
 
         else:
             data = np.empty(self.nn)
@@ -369,19 +393,15 @@ class Grid(object):
                        for geom, value in zip(shape.geometry, shape[attribute]))
 
 
-
-
             data = features.rasterize(
                 shapes=to_burn,
                 out_shape=self.shape2,
                 transform=self.transform,
                 fill=fill_value,
-                all_touched=True,
-                *args, **kwargs)
-
-        
-        
-        if return_map == True:
+                all_touched=all_touched,
+                **kwargs)
+    
+        if (map_to_int == True and return_map == True):
             return data, moby_dict
         else:
             return data
@@ -394,16 +414,17 @@ class Grid(object):
                   only_frame=True,
                   deep_copy=False,
                   set_center=False, 
-                  *args, **kwargs):
+                  **kwargs):
 
-        '''
-        Read data frame to resample interpolated grid
-        xyz     :   Sequence with x, y and data labels
-        interpol    : Interpolation method, e.g cubic, nearest
+        '''Read irregular (or regular) grid. Resampling and interpolating. 
 
-        only_frame : Speeds up interpolation by only regard points within the grid extent (+ margins)
+        Keyword arguments:
+        xyz --- Sequence with x, y and data labels
+        interpol --- Interpolation method, e.g cubic, nearest
+        only_frame --- Speeds up interpolation by only 
+                regard points within the grid extent (+ margins)
 
-        '''
+        Returns numpy array'''
 
         if crs_src == None:
             crs_src = self.crs_src
@@ -423,8 +444,8 @@ class Grid(object):
             x = self._set_meridian(x)
 
         xx, yy = np.meshgrid(x, y)
-        xv, yv = proj.transform(proj.Proj(init='epsg:%s' % crs_src),
-                                proj.Proj(init='epsg:%s' % crs), xx, yy)
+        xv, yv = proj.transform(proj.Proj(crs_src),
+                                proj.Proj(crs), xx, yy)
 
         zv = array[xyz[2]].values
         n = zv.size
@@ -445,7 +466,7 @@ class Grid(object):
                                     (self.ds.coords['XV'], 
                                     self.ds.coords['YV']), 
                                     method=interpol, 
-                                    *args, **kwargs)
+                                    **kwargs)
 
     def read_ascii(self,
                    f_name,
@@ -459,13 +480,16 @@ class Grid(object):
                    crs=None,
                    coord_factor=1,
                    skiprows = 0,
-                   *args, **kwargs):
-        '''
-        Function reads textfile, e.g. csv, to grid. 
-        f_name      : String, name of file to import
-        x_col       : index for column holding x values in given crs
-        y_col       : index for column holding y values in given crs
-        data_col    : index for column with data values
+                   **kwargs):
+        '''Read ascii table to grid
+
+        Textfile, e.g. csv, to grid. 
+
+        Keyword arguments:
+        f_name -- String, name of file to import
+        x_col -- index for column holding x values in given crs
+        y_col --index for column holding y values in given crs
+        data_col -- index for column with data values
 
         '''
         if crs == None:
@@ -482,8 +506,8 @@ class Grid(object):
         table[:, x_col] *= coord_factor
         table[:, y_col] *= coord_factor
 
-        xx, yy = proj.transform(proj.Proj(init='epsg:%s' % crs_src),
-                                proj.Proj(init='epsg:%s' % crs), table[:, x_col], table[:, y_col])
+        xx, yy = proj.transform(proj.Proj(crs_src),
+                                proj.Proj(crs), table[:, x_col], table[:, y_col])
 
         if only_frame:
             is_in = self._check_if_in(xx, yy)
@@ -509,15 +533,14 @@ class Grid(object):
                     no_data=None,
                     rgb_convert=True,
                     bit_norm=255, 
-                    *args, **kwargs):
-        '''
-        Imports raster in geotiff format to grid. 
+                    **kwargs):
+        '''Imports raster in geotiff format to grid. 
 
         Using gdal/rasterio warp to transform raster to right crs and extent. 
 
-        sub_sampling    :   integer to decrease size of input raster and speed up warp
+        sub_sampling  -- integer to decrease size of input raster and speed up warp
 
-        Resampling      :   Interpolation method
+        Resampling -- Interpolation method
         Options for resampling:
             Resampling.nearest, 
             Resampling.bilinear, 
@@ -526,9 +549,8 @@ class Grid(object):
             Resampling.lanczos, 
             Resampling.average    
 
+        Returns numpy array. 
         '''
-        from rasterio.plot import reshape_as_image
-
 
         in_raster = rasterio.open(raster_name)
 
@@ -589,10 +611,10 @@ class Grid(object):
 
 # Exports
     def grid_to_grd(self, data, save_name='grid.nc'):
-        '''
-        Save data array as netCDF
+        '''Save data array as netCDF
 
-        data as string or data array
+        Keyword arguments:
+        data --- string or data array
         '''
         if isinstance(data, str):
             data = self.ds[data]
@@ -602,17 +624,18 @@ class Grid(object):
         return save_grid
 
     def grid_to_raster(self, ds,
-                       raster_name='raster_export.tif'
-                       ):
-        '''
-        Save as geoTIFF
+                       raster_name='raster_export.tif'):
+        '''Save as geoTIFF
+
+        Keyword arguments: Save to file name
+
         https://gis.stackexchange.com/questions/37238/writing-numpy-array-to-raster-file?rq=1
         '''
         arr = ds.values
         out_raster = rasterio.open(raster_name, 'w', driver='GTiff',
                                    height=arr.shape[0], width=arr.shape[1],
                                    count=1, dtype=str(arr.dtype),
-                                   crs={'init': 'EPSG:%s' % self.crs},
+                                   crs=self.crs,
                                    transform=self.transform)
         out_raster.write(arr, 1)
         out_raster.close()
@@ -666,15 +689,16 @@ class Grid(object):
                     center = True,
                     fmt = '%6.2f', 
                     no_data = -9999):
-        '''
-        Save to asc format
+        '''Save to asc format
+
+        Keyword arguments:
         corner  --   Coordinates of corner, else centre
 
         https://gis.stackexchange.com/questions/37238/writing-numpy-array-to-raster-file?rq=1
         http://resources.esri.com/help/9.3/ArcGISengine/java/Gp_ToolRef/Spatial_Analyst_Tools/esri_ascii_raster_format.htm
         '''
         header_labels = ['NCOLS', 'NROWS', 'XLLCORNER', 'YLLCORNER', 'CELLSIZE', 'NODATA_VALUE']
-        header_values = [self.nx, self.ny, self.left, self.down, self.res[0], -9999]
+        header_values = [self.nx, self.ny, self.left, self.down, self.res[0], no_data]
 
         if center:
             header_labels[2:4] = ['XLLCENTER', 'YLLCENTER']
@@ -701,7 +725,6 @@ class Grid(object):
         '''
         To be implemented from Staal et al 2019: extract profiles. 
         '''
-
         return 0
 
     def oblique_view(self, data, 
@@ -715,15 +738,17 @@ class Grid(object):
         vmin = None, 
         vmax = None, 
         cmap = 'terrain'):
-        '''
-        3D oblique view
-        azimut :    Camera direction
-        elevation:  Camera height
-        distance :  Camera distance
-        roll    :   Camera rotation
-        bgcolor : Tuple of lenght 3, values from 0 to 1 RGB
-        warp_scale :    Enhance z, lower value increase the distortion
-        vmin and vmax : Set color range
+
+        '''3D oblique view
+
+        Keyword arguments:
+        azimut -- Camera direction
+        elevation -- Camera height
+        distance -- Camera distance
+        roll -- Camera rotation
+        bgcolor -- Tuple of lenght 3, values from 0 to 1 RGB
+        warp_scale -- Enhance z, lower value increase the distortion
+        vmin and vmax -- Set color range
 
         Function exemplifies the use of mayavi and VTK for visualizing multidimensional data
         '''
@@ -752,8 +777,6 @@ class Grid(object):
 
         return None
 
-
-
     def map_grid(self, im_data,
                  vmin=None,
                  vmax=None,
@@ -779,35 +802,35 @@ class Grid(object):
                  mer=None, 
                  *args, **kwargs):
 
-        '''
-        Make map view for print or display. 
+        '''Make map view for print or display. 
 
-        vmin, vmax  :   Set range oc colormap. If not set 0.1 percentille is used
-        cmap        :   Select colormap
-        cbar        :   Boolean colorbar or not
-        extent      :   Select a different extent than the object (left, right, down, up)
-        line_c      :   Color of lines
-        line_grid_c :   Color of gridlines
-        line_w      :   Whidth of lines 
-        circ_map    :   If selected, map is cropped to a circle around the center as 
+        Keyword arguments:
+
+        vmin, vmax -- Set range oc colormap. If not set 0.1 percentille is used
+        cmap -- Select colormap
+        cbar -- Boolean colorbar or not
+        extent -- Select a different extent than the object (left, right, down, up)
+        line_c -- Color of lines
+        line_grid_c -- Color of gridlines
+        line_w --  Whidth of lines 
+        circ_map -- If selected, map is cropped to a circle around the center as 
                         a hub. Sometimes visually appealing, this is a leftover from early 
                         use of the code for only Antarctic continental scale maps. 
-        figsize     :   Size of figure in cm Default is 12cm high
-        land_only   :   Crop oceans (In furure versions)
-        ocean_color :   Colour of oceans
-        no_land_fill:   Value for no land
-        title       :   String for title
-        save_name   :   Name of file to save to. E.g. png, pdf, or jpg 
-        show_map    :   Off if only saving, good for scripting
-        map_res     :   'c'is fast but not detailed, 'i' in between, 
+        figsize  -- Size of figure in cm Default is 12cm high
+        land_only -- Crop oceans (In furure versions)
+        ocean_color -- Colour of oceans
+        no_land_fill -- Value for no land
+        title -- String for title
+        save_name -- Name of file to save to. E.g. png, pdf, or jpg 
+        show_map -- Off if only saving, good for scripting
+        map_res -- 'c'is fast but not detailed, 'i' in between, 
                             'f' is slow and detaile. For 'i' and finer hires data is needed
-        draw_coast  :   If True, Basemab coastline is drawn. 
-        draw_grid   :   Draw parallells and meridieans
-        par         :   List of Parallels
-        mer         :   List of Meridians        
+        draw_coast -- If True, Basemab coastline is drawn. 
+        draw_grid -- Draw parallells and meridieans
+        par -- List of Parallels
+        mer -- List of Meridians        
     
         This function might eventually be amended to use cartopy or GMT. 
-
         '''
 
         def create_circular_mask(h, w, center=None, radius=None):
@@ -829,12 +852,17 @@ class Grid(object):
         if mer == None:
             mer = np.arange(-180, 180, 45)
 
+        #pyproj.CRS
+        #basemap_epsg = to_epsg(self.crs, min_confidence=90)
+
+        basemap_epsg = int(re.findall("\d+.\d+", self.crs)[0] )
+
         m = Basemap(llcrnrlon=self.lon[-1, 0],
                     llcrnrlat=self.lat[-1, 0],
                     urcrnrlon=self.lon[0, -1],
                     urcrnrlat=self.lat[0, -1],
                     resolution=map_res,
-                    epsg=self.crs, **kwargs)
+                    epsg=basemap_epsg, **kwargs)
 
         if extent == None:
             extent = [self.left, self.right, self.down, self.up]
@@ -907,9 +935,13 @@ class Grid(object):
              x_unit='(km)',
              y_unit='(km)',
              ref_range=None,
-             *args, **kwargs):
-        """
-        Quick look of 2D slices. 
+             **kwargs):
+        """Quick look of 2D slices. 
+
+        Keyword arguments:
+        interp_method -- imshow interpolation methods
+        
+
         Rather undeveloped function. 
         """
 
@@ -934,7 +966,8 @@ class Grid(object):
                                                interpolation=interp_method,
                                                cmap=color_map,
                                                extent=self.x1y1x2y2,
-                                               vmin=plot_range[0], vmax=plot_range[1])
+                                               vmin=plot_range[0], vmax=plot_range[1],
+                                               **kwargs)
                 ax[k // n_sq, k % n_sq].title.set_text('%s' % (raster.name,))
                 ax[k // n_sq, k % n_sq].set_aspect('auto')
                 ax[k // n_sq, k % n_sq].set_ylabel(y_coords.name + x_unit)
@@ -959,8 +992,7 @@ class Grid(object):
                slider='z',
                invert_yaxis=False,
                sub_sample=4):
-        '''
-        Test for interactive display 3D grid with slider. 
+        '''Test for interactive display 3D grid with slider. 
 
         '''
         import holoviews as hv
@@ -986,14 +1018,15 @@ class Grid(object):
                    w_att = 'W',
                    norm=True):
         '''Read and colvolve line vectors. 
+
         Keyword arguments:
-        file_name   --  Name of shapefile containing lines
+        file_name  --  Name of shapefile containing lines
         kernel_size --  Size of Gaussian kernel. Larger is slower, but generate a broader 
                             gradient. 
-        sigma       --  Standard deviation for layer
-        norm        --  Normalise distribution to [0,1]
-        p_att       --  Attribute for vertices P (rating)
-        w_att       --  Attribute for vertices W (rating)
+        sigma --  Standard deviation for layer
+        norm  --  Normalise distribution to [0,1]
+        p_att --  Attribute for vertices P (rating)
+        w_att  --  Attribute for vertices W (rating)
 
         See Staal et al (2019) (submitted)
         '''
@@ -1035,19 +1068,19 @@ class Grid(object):
         '''Save 2D array as png.file formatted for Morse et al vizualisation software
 
         Keyword arguments:
-        v                   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
-        png_name            --  Name of file to save 'foo.png'
-        v_min               --  Data value to replresent pixel value 0 or (0,0,0) (for 8 bit)
-        v_max               --  Data value to replresent pixel value 255 or (255,255,255) (for 8 bit)
-        png_nx, png_ny      --  Output size of png_file
-        morse_proj          --  Set to epsg_4326, each degree = 10 pixels
-        set_geometry        --  False if the agrid is already the same format as Morse 
-        bit_depth           --  Bit depth of png file, for now only 8 bit
-        interpol_method     --  Interpolation method, 'nearest', 'linear', 'cubic'
-        confine_nearest     --  If nearest interpolation is used, the method extrapolates values
+        v   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
+        png_name  --  Name of file to save 'foo.png'
+        v_min   --  Data value to replresent pixel value 0 or (0,0,0) (for 8 bit)
+        v_max   --  Data value to replresent pixel value 255 or (255,255,255) (for 8 bit)
+        png_nx, png_ny  --  Output size of png_file
+        morse_proj  --  Set to epsg_4326, each degree = 10 pixels
+        set_geometry   --  False if the agrid is already the same format as Morse 
+        bit_depth  --  Bit depth of png file, for now only 8 bit
+        interpol_method   --  Interpolation method, 'nearest', 'linear', 'cubic'
+        confine_nearest   --  If nearest interpolation is used, the method extrapolates values
                                     this can be removed with this boolean switch 
-        rgb                 --  If True, export as RGBA, else one band
-        clip                --  If true, values will be clipped to set v_min and v_max, 
+        rgb --  If True, export as RGBA, else one band
+        clip  --  If true, values will be clipped to set v_min and v_max, 
                                     else normalisation
 
         Returns : Log string to print or write to ascii. 
@@ -1078,7 +1111,7 @@ class Grid(object):
 
         norm = 2**bit_depth - 1
 
-        # If the grid is allready in the right extent, resolution and
+        # If the grid is already in the right extent, resolution and
         # projection, there is no need to do it again, and set_geometry can be False 
         if set_geometry:
 
