@@ -91,7 +91,7 @@ class Grid(object):
 
         '''
 
-        # adjust grid to center points rather than outer extent:
+        # adjust grid to centre points rather than outer extent:
         if set_frame:
             if center:
                 left += res[0]/2
@@ -145,6 +145,7 @@ class Grid(object):
         self.ds.coords['XV'] = (('Y', 'X'), self.xv.astype(coord_d_type))
         self.ds.coords['YV'] = (('Y', 'X'), self.yv.astype(coord_d_type))
 
+        #Define projections as proj4 strings
         if isinstance(crs, int):
             crs = '+init=epsg:' + str(crs)
 
@@ -153,9 +154,6 @@ class Grid(object):
 
         self.crs_src = crs_src
         self.crs = crs
-
-        print(type(self.crs), self.crs)
-        print(type(self.crs_src), self.crs_src)
 
         self.lon, self.lat = proj.transform(proj.Proj(self.crs),
                                             proj.Proj(init='epsg:4326'), self.xv, self.yv)
@@ -205,16 +203,15 @@ class Grid(object):
         return x_array
 
 
-    def _user_to_array(input):
+    def _user_to_array(self, im_data):
         '''Reads user input to numpy array. 
         '''
         if isinstance(im_data, str):
             im_data = self.ds[im_data].values
-        elif isinstance(y, (np.ndarray, np.generic) ):
+        elif isinstance(im_data, (np.ndarray, np.generic) ):
             pass # if numpy array
         else:
-            im_data = im_data.values # if dataframe
-
+            im_data = im_data.values # if data frame
         return im_data
 
     def save(self, data=None, file_name='grid.nc'):
@@ -283,10 +280,7 @@ class Grid(object):
         fill_value -- extrapolation value
         '''
         for label in [array, old, new]:
-            if isinstance(label, str):
-                label = self.ds[label].values
-                if verbose:
-                    print(array, old, new)
+            label = _user_to_array(label)
 
         return interpolate.interp1d(old,
                                     array,
@@ -525,7 +519,7 @@ class Grid(object):
     def read_raster(self,
                     raster_name,
                     src_crs=None,
-                    source_extra=1000,
+                    source_extra=500,
                     resampling=None,
                     sub_sampling=None,
                     sub_window=None,
@@ -565,7 +559,7 @@ class Grid(object):
         if self.verbose:
             print('Raster bounds:', in_raster.bounds, in_raster.shape)
 
-        dst_crs = CRS.from_epsg(self.crs)
+        dst_crs = self.crs
 
         if sub_sampling in (None, 0, 1):
             sub_sampling = 1
@@ -616,8 +610,7 @@ class Grid(object):
         Keyword arguments:
         data --- string or data array
         '''
-        if isinstance(data, str):
-            data = self.ds[data]
+        data = _user_to_array(data)
 
         save_grid = data.to_netcdf(save_name)
 
@@ -756,8 +749,7 @@ class Grid(object):
         # Import mlab
         from mayavi import mlab
         
-        if isinstance(data, str):
-            data = self.ds[data].values
+        data = _user_to_array(data)
 
         if vmin == None:
             vmin = np.nanpercentile(data, 0.1)
@@ -840,8 +832,7 @@ class Grid(object):
             mask = dist_from_center <= radius
             return mask
 
-        if isinstance(im_data, str):
-            im_data = self.ds[im_data].values
+        im_data = self._user_to_array(im_data)
 
         if figsize == None:
             figsize = (12, 12 * self.nx / self.ny)
@@ -998,6 +989,8 @@ class Grid(object):
         import holoviews as hv
         hv.extension('bokeh', logo=False)
 
+        data = _user_to_array(data)
+
         ds = hv.Dataset((np.arange(np.shape(data)[2]),
                          np.linspace(0., 1., np.shape(data)[1]),
                          np.linspace(0., 1., np.shape(data)[0])[::-1],
@@ -1052,7 +1045,7 @@ class Grid(object):
         return model
 
     def export_morse_png(self,
-                         v,
+                         data,
                          png_name,
                          v_min=0.,
                          v_max=14.0,
@@ -1068,7 +1061,7 @@ class Grid(object):
         '''Save 2D array as png.file formatted for Morse et al vizualisation software
 
         Keyword arguments:
-        v   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
+        data   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
         png_name  --  Name of file to save 'foo.png'
         v_min   --  Data value to replresent pixel value 0 or (0,0,0) (for 8 bit)
         v_max   --  Data value to replresent pixel value 255 or (255,255,255) (for 8 bit)
@@ -1099,8 +1092,7 @@ class Grid(object):
         import imageio
 
         # String is taken as label
-        if isinstance(v, str):
-            v = self.ds[v].values
+        data = _user_to_array(data)
 
         if bit_depth == 16:
             d_type = np.uint16
@@ -1120,9 +1112,9 @@ class Grid(object):
                                     proj.Proj(init='epsg:%s' % morse_proj), self.xv, self.yv)
 
             # Resshape for interpolation
-            vi = np.reshape(v, (v.size))
-            xi = np.reshape(xp, (v.size))
-            yi = np.reshape(yp, (v.size))
+            vi = np.reshape(data, (data.size))
+            xi = np.reshape(xp, (data.size))
+            yi = np.reshape(yp, (data.size))
 
             # Making index of coordinates
             xi = ((xi * png_nx // 360) + png_nx // 2).astype('int')
@@ -1132,7 +1124,7 @@ class Grid(object):
             # yyy as array index from top to bottom, hence -1
             xxx, yyy = np.meshgrid(range(0, png_nx), range(png_ny, 0, -1))
 
-            v = interpolate.griddata((xi, yi), vi, (xxx, yyy),
+            data = interpolate.griddata((xi, yi), vi, (xxx, yyy),
                                      method=interpol_method,
                                      fill_value=np.nan)
 
@@ -1144,18 +1136,18 @@ class Grid(object):
                                                                  method='linear',
                                                                  fill_value=np.nan))).astype(d_type)
             else:
-                alpha = (norm * np.isfinite(v)).astype(d_type)
+                alpha = (norm * np.isfinite(data)).astype(d_type)
         else:
-            alpha = norm * np.ones_like(v).astype(d_type)
+            alpha = norm * np.ones_like(data).astype(d_type)
 
         # alpa is set by alpha array, not nan
-        v = np.nan_to_num(v)
+        data = np.nan_to_num(data)
 
         # np.clip values outside interval are clipped:
         if clip:
-            v_png = (np.clip(v, v_min, v_max) - v_min) / (v_max - v_min)
+            v_png = (np.clip(data, v_min, v_max) - v_min) / (v_max - v_min)
         else:
-            v_png = (v - v_min) / (v_max - v_min)
+            v_png = (data - v_min) / (v_max - v_min)
 
         # png saved as uint
         png = (norm * v_png).astype(np.uint8)
@@ -1174,18 +1166,25 @@ class Grid(object):
             png_name, v_min, v_max, bit_depth)
         report += 'bands: %s interpolation: %s\n' % (
             np.shape(png_write)[2], interpol_method)
-        report += 'v \t  norm \t  to png \t png \n'
-        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmin(v),
+        report += 'data \t  norm \t  to png \t png \n'
+        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmin(data),
                                                      np.nanmin(v_png),
                                                      np.nanmin(png),
                                                      np.nanmin(read_file))
-        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmax(v),
+        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmax(data),
                                                      np.nanmax(v_png),
                                                      np.nanmax(png),
                                                      np.nanmax(read_file))
 
         read_file = None
         return report
+
+
+class Features(Grid):
+    def __init__(self):
+        super(Features, self).__init__()
+
+    print('I m in sub!!!!')
 
 
     # Accessories 
@@ -1197,6 +1196,7 @@ class Grid(object):
 
         '''
 
+        print('Im in download in sub')
         # Check if already exist
         if not check:
             check = there_is_file
