@@ -50,20 +50,20 @@ def make_maps_fig_2(target, source, env):
                 ant.read_raster(str(source[0]), no_data = 32767.) )
 
 	# Read polygons, map string attribute to integer as burn values. Map of integer values saved as dict
-	dranage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
-	ant.ds['DRANAGE'] = (('Y', 'X'), dranage)
+	drainage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
+	ant.ds['DRAINAGE'] = (('Y', 'X'), drainage)
 
 	# Use ID from dict to select segments of map. Divide with value of integer class to get 1 
 	# 2-18
-	polygons = [int_map[str(x) + 'g'] for x in range(8,20)] # Grounded dranage areas
-	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRANAGE'].isin(polygons) #Select only ice in polygons
+	polygons = [int_map[str(x) + 'g'] for x in range(8,20)] # Grounded drainage areas
+	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRAINAGE'].isin(polygons) #Select only ice in polygons
 
 	ant.ds['DEM'] = (('Y', 'X'), 
                 ant.read_raster(str(source[2]), no_data = 32767.) )
 
 
 	#Make maps
-	ant.map_grid('DRANAGE', 
+	ant.map_grid('DRAINAGE', 
 		cmap='Spectral', 
 		save_name=str(target[0]), 
 		show_map=False)
@@ -100,7 +100,7 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 
 
 # Build Fig 2
-sub_figs = ['fig/dranage.pdf', 'fig/ice.pdf', 'fig/selected.pdf', 'fig/oblique_view.png', 'fig/oblique_top.png']
+sub_figs = ['fig/drainage.pdf', 'fig/ice.pdf', 'fig/selected.pdf', 'fig/oblique_view.png', 'fig/oblique_top.png']
 env.Make_Maps(target = sub_figs, 
 	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 
 	'data/GSFC_DrainageSystems.shp', 
@@ -118,10 +118,10 @@ if download_data:
 	env.Command('data/bedmap2_tiff/bedmap2_bed.tif','data/bedmap2_tiff.zip','unzip -n $SOURCE -d data/ ')
 
 	# Download test poygons
-	url_dranage_data = 'http://quantarctica.tpac.org.au/Quantarctica3/Glaciology/GSFC%20Drainage/GSFC_DrainageSystems'
+	url_drainage_data = 'http://quantarctica.tpac.org.au/Quantarctica3/Glaciology/GSFC%20Drainage/GSFC_DrainageSystems'
 	for file_extension in ['.shp', '.prj', '.shx', '.dbf', '.qix']:
 		env.Command('data/GSFC_DrainageSystems%s'%file_extension, 
-			None,'curl -L %s > $TARGET' %(url_dranage_data+file_extension))
+			None,'curl -L %s > $TARGET' %(url_drainage_data+file_extension))
 
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
 	source = 'tex/fig_1.tex')
