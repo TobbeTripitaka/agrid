@@ -50,7 +50,9 @@ import rasterio
 from rasterio.crs import *
 from rasterio import features
 from rasterio.warp import Resampling
-from rasterio.plot import reshape_as_image
+from rasterio.windows import Window
+
+from rasterio.plot import reshape_as_image, reshape_as_raster
 
 ###
 # Mayavi and Bokeh are imported in methods, when needed. 
@@ -76,11 +78,11 @@ class Grid(object):
                  down=-90,
                  res=[1, 1],
                  set_frame = True, 
-                 center = True,
+                 center = False,
                  depths=[0. * km, 8. * km, 16. * km, 40. * km, 350. * km],
                  crs=4326,
                  crs_src=4326,
-                 color_coord='RGB',
+                 band_coord='RGB',
                  use_dask=True,
                  chunk_n=10,
                  coord_d_type=np.float32,
@@ -88,7 +90,6 @@ class Grid(object):
         '''
         Define projection of grid:
         crs : integer
-
         '''
 
         # adjust grid to centre points rather than outer extent:
@@ -103,6 +104,9 @@ class Grid(object):
                 up -= res[1]
 
         self.res = list(res)
+
+        if isinstance(depths, (int, float)):
+            depths = [depths]
         self.depths = list(depths)
 
         self.x1y1x2y2 = (left, up, right, down)
@@ -132,9 +136,11 @@ class Grid(object):
         self.ds.coords['Y'] = np.linspace(
             up, down, self.ny).astype(self.coord_d_type)
         self.nz = len(depths)
+        
         self.ds.coords['Z'] = np.array(depths).astype(coord_d_type)
-        self.depths = depths
-        self.ds.coords[color_coord] = list(color_coord)
+        
+
+        self.ds.coords[band_coord] = list(band_coord)
 
         # Numpy arrays are indexed rows and columns (y,x)
         self.shape2 = (self.ny, self.nx)
@@ -157,6 +163,7 @@ class Grid(object):
 
         self.lon, self.lat = proj.transform(proj.Proj(self.crs),
                                             proj.Proj(init='epsg:4326'), self.xv, self.yv)
+
 
         self.ds.coords['lat'] = (('Y', 'X'), self.lat.astype(coord_d_type))
         self.ds.coords['lon'] = (('Y', 'X'), self.lon.astype(coord_d_type))
@@ -232,6 +239,7 @@ class Grid(object):
         write_coords -- writes complete list of coordinates '''
         if ds == None:
             ds = self.ds
+
         if file_name == None:
             file_name = 'info.txt'
 
@@ -280,7 +288,7 @@ class Grid(object):
         fill_value -- extrapolation value
         '''
         for label in [array, old, new]:
-            label = _user_to_array(label)
+            label = self._user_to_array(label)
 
         return interpolate.interp1d(old,
                                     array,
@@ -514,7 +522,7 @@ class Grid(object):
                                     (self.ds.coords['XV'],
                                      self.ds.coords['YV']),
                                     method=interpol,
-                                    *args, **kwargs)
+                                    **kwargs)
 
     def read_raster(self,
                     raster_name,
@@ -535,16 +543,25 @@ class Grid(object):
         sub_sampling  -- integer to decrease size of input raster and speed up warp
 
         Resampling -- Interpolation method
-        Options for resampling:
-            Resampling.nearest, 
-            Resampling.bilinear, 
-            Resampling.cubic, 
-            Resampling.cubic_spline, 
-            Resampling.lanczos, 
-            Resampling.average    
+                Options for resampling:
+                    Resampling.nearest, 
+                    Resampling.bilinear, 
+                    Resampling.cubic, 
+                    Resampling.cubic_spline, 
+                    Resampling.lanczos, 
+                    Resampling.average    
+
+        A window is a view onto a rectangular subset of a raster 
+        dataset and is described in rasterio by column and row offsets 
+        and width and height in pixels. These may be ints or floats.
+        Window(col_off, row_off, width, height)
+
+
 
         Returns numpy array. 
         '''
+
+        #import rasterio.windows
 
         in_raster = rasterio.open(raster_name)
 
@@ -564,9 +581,10 @@ class Grid(object):
         if sub_sampling in (None, 0, 1):
             sub_sampling = 1
 
+
         raster_shape = (in_raster.count, in_raster.height //
                         sub_sampling, in_raster.width // sub_sampling)
-        source = in_raster.read(out_shape=raster_shape, window=sub_window)
+        source = in_raster.read(out_shape=raster_shape) #window=Window.from_slices(sub_window)
 
         if sub_window == None:
             pass
@@ -610,29 +628,43 @@ class Grid(object):
         Keyword arguments:
         data --- string or data array
         '''
-        data = _user_to_array(data)
+        if isinstance(data, str):
+            data = self.ds[data]
 
         save_grid = data.to_netcdf(save_name)
-
         return save_grid
 
-    def grid_to_raster(self, ds,
-                       raster_name='raster_export.tif'):
+
+    def grid_to_raster(self, data,
+                       save_name='raster_export.tif', 
+                       raster_dtype = np.float64,
+                       raster_factor = 1):
         '''Save as geoTIFF
 
         Keyword arguments: Save to file name
 
-        https://gis.stackexchange.com/questions/37238/writing-numpy-array-to-raster-file?rq=1
         '''
-        arr = ds.values
-        out_raster = rasterio.open(raster_name, 'w', driver='GTiff',
-                                   height=arr.shape[0], width=arr.shape[1],
-                                   count=1, dtype=str(arr.dtype),
+        data = self._user_to_array(data)
+
+
+        # If 2D array, define 3rd dimention as 1
+        if data.ndim == 2:
+            data.shape += 1,
+
+        n_bands = data.shape[2]
+
+        #data = reshape_as_raster(data)
+
+        with rasterio.open(save_name, 'w', driver='GTiff',
+                                   height=data.shape[0], width=data.shape[1],
+                                   count=n_bands, dtype=raster_dtype,
                                    crs=self.crs,
-                                   transform=self.transform)
-        out_raster.write(arr, 1)
-        out_raster.close()
-        return None
+                                   transform=self.transform) as dst:
+
+            for k in range(n_bands):
+                dst.write(data[:,:,k]*raster_factor, indexes=k+1)
+
+        return os.path.getsize(save_name)
 
     # def frame_to_polygon(self,
     #                      file_name,
@@ -677,7 +709,7 @@ class Grid(object):
     #     return None
 
     def frame_to_ascii(self, 
-                    out_data, 
+                    data, 
                     asc_file_name = 'corners.txt',
                     center = True,
                     fmt = '%6.2f', 
@@ -690,6 +722,9 @@ class Grid(object):
         https://gis.stackexchange.com/questions/37238/writing-numpy-array-to-raster-file?rq=1
         http://resources.esri.com/help/9.3/ArcGISengine/java/Gp_ToolRef/Spatial_Analyst_Tools/esri_ascii_raster_format.htm
         '''
+
+        data = self._user_to_array(data)
+
         header_labels = ['NCOLS', 'NROWS', 'XLLCORNER', 'YLLCORNER', 'CELLSIZE', 'NODATA_VALUE']
         header_values = [self.nx, self.ny, self.left, self.down, self.res[0], no_data]
 
@@ -699,11 +734,8 @@ class Grid(object):
  
         # The wunder of Python: 
         header = ''.join([''.join(h) for h in zip(header_labels, [' ']*6, [str(val) for val in header_values], ['\n']*6)])
-
-        if isinstance(out_data, str):
-            out_data = self.ds[out_data].values
         
-        np.savetxt(asc_file_name, out_data, 
+        np.savetxt(asc_file_name, data, 
            delimiter=' ', 
            header = header, 
            newline='', 
@@ -721,7 +753,8 @@ class Grid(object):
         return 0
 
     def oblique_view(self, data, 
-        save_name='oblique_view.png', 
+        save_name=None, 
+        show_oblique=False, 
         azimuth=0, 
         elevation=7500, 
         distance=1100, 
@@ -749,7 +782,7 @@ class Grid(object):
         # Import mlab
         from mayavi import mlab
         
-        data = _user_to_array(data)
+        data = self._user_to_array(data)
 
         if vmin == None:
             vmin = np.nanpercentile(data, 0.1)
@@ -764,7 +797,13 @@ class Grid(object):
         mlab.surf(data, warp_scale=warp_scale, colormap=cmap, vmin=vmin, vmax=vmax)
 
         mlab.view(azimuth=azimuth, elevation=elevation, distance=distance, roll=roll)
-        mlab.savefig(save_name, size=(1000, 1000))
+
+        if save_name != None:
+            mlab.savefig(save_name, size=(1000, 1000))
+
+        if show_oblique:
+            mlab.show()
+
         mlab.close(all=True)
 
         return None
@@ -999,234 +1038,3 @@ class Grid(object):
                         vdims=vdims)
         return ds.to(hv.Image, flat).redim(slider).options(colorbar=True,
                                                            invert_yaxis=invert_yaxis).hist()
-
-
-# Features for special use for studies. 
-
-    def read_model(self,
-                   shape_file_name,
-                   kernel_size=100,
-                   std=5000,
-                   p_att = 'P',
-                   w_att = 'W',
-                   norm=True):
-        '''Read and colvolve line vectors. 
-
-        Keyword arguments:
-        file_name  --  Name of shapefile containing lines
-        kernel_size --  Size of Gaussian kernel. Larger is slower, but generate a broader 
-                            gradient. 
-        sigma --  Standard deviation for layer
-        norm  --  Normalise distribution to [0,1]
-        p_att --  Attribute for vertices P (rating)
-        w_att  --  Attribute for vertices W (rating)
-
-        See Staal et al (2019) (submitted)
-        '''
-        import fiona  # Replace with geopandas, update model!
-        from scipy.ndimage.filters import gaussian_filter
-
-        with fiona.open(shape_file_name, 'r') as src:
-            blurred = geom_np = np.zeros(self.shape2 + (len(src),))
-            for i, geom in enumerate(src):
-                geom_np[:, :, i] = rasterio.features.rasterize(
-                    [geom['geometry']],
-                    out_shape=self.shape2,
-                    transform=self.transform) * 2 + geom['properties'][p_att] / 2
-
-                sigma_0 = (std + std / geom['properties'][w_att]) / (2 * self.res[0])
-                sigma_1 = (std + std / geom['properties'][w_att]) / (2 * self.res[1])
-
-                convolved[:, :, i] = gaussian_filter(geom_np[:, :, i], (sigma_0, sigma_1))
-        model = np.sum(convolved, axis=2)
-        if norm:
-            model[np.isnan(model)] = 0 
-            model = (model - np.min(model)) / np.ptp(model)
-        return model
-
-    def export_morse_png(self,
-                         data,
-                         png_name,
-                         v_min=0.,
-                         v_max=14.0,
-                         png_nx=3600,
-                         png_ny=1800,
-                         morse_proj=4326,
-                         set_geometry=True,
-                         bit_depth=8,
-                         interpol_method='nearest',
-                         confine_nearest=False,
-                         rgb=True,
-                         clip=False):
-        '''Save 2D array as png.file formatted for Morse et al vizualisation software
-
-        Keyword arguments:
-        data   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
-        png_name  --  Name of file to save 'foo.png'
-        v_min   --  Data value to replresent pixel value 0 or (0,0,0) (for 8 bit)
-        v_max   --  Data value to replresent pixel value 255 or (255,255,255) (for 8 bit)
-        png_nx, png_ny  --  Output size of png_file
-        morse_proj  --  Set to epsg_4326, each degree = 10 pixels
-        set_geometry   --  False if the agrid is already the same format as Morse 
-        bit_depth  --  Bit depth of png file, for now only 8 bit
-        interpol_method   --  Interpolation method, 'nearest', 'linear', 'cubic'
-        confine_nearest   --  If nearest interpolation is used, the method extrapolates values
-                                    this can be removed with this boolean switch 
-        rgb --  If True, export as RGBA, else one band
-        clip  --  If true, values will be clipped to set v_min and v_max, 
-                                    else normalisation
-
-        Returns : Log string to print or write to ascii. 
-
-        Saves png file (png_name)
-
-        The saved png file:
-            RGBA 8 bit (In future 16 bit might be introduced)
-            3600x1800 pixels
-            EPSG 4326
-
-        See Morse et al 2019 (in prep)
-
-        '''
-
-        import imageio
-
-        # String is taken as label
-        data = _user_to_array(data)
-
-        if bit_depth == 16:
-            d_type = np.uint16
-        else:
-            d_type = np.uint8
-            if bit_depth != 8:
-                print('Bit depth set to 8')
-
-        norm = 2**bit_depth - 1
-
-        # If the grid is already in the right extent, resolution and
-        # projection, there is no need to do it again, and set_geometry can be False 
-        if set_geometry:
-
-            # Reproject grid to Morse image, usually 4326
-            xp, yp = proj.transform(proj.Proj(init='epsg:%s' % self.crs),
-                                    proj.Proj(init='epsg:%s' % morse_proj), self.xv, self.yv)
-
-            # Resshape for interpolation
-            vi = np.reshape(data, (data.size))
-            xi = np.reshape(xp, (data.size))
-            yi = np.reshape(yp, (data.size))
-
-            # Making index of coordinates
-            xi = ((xi * png_nx // 360) + png_nx // 2).astype('int')
-            # Making index of coordinates
-            yi = ((yi * png_ny / 180) + png_ny // 2).astype('int')
-
-            # yyy as array index from top to bottom, hence -1
-            xxx, yyy = np.meshgrid(range(0, png_nx), range(png_ny, 0, -1))
-
-            data = interpolate.griddata((xi, yi), vi, (xxx, yyy),
-                                     method=interpol_method,
-                                     fill_value=np.nan)
-
-            # If nearest, interpolate extrapolate voronoi type fields, to remove them, we need to take a detour
-            # and make a mask from a different interpolation technique, e.g.
-            # linear.
-            if interpol_method == 'nearest' and confine_nearest:
-                alpha = (norm * np.isfinite(interpolate.griddata((xi, yi), vi, (xxx, yyy),
-                                                                 method='linear',
-                                                                 fill_value=np.nan))).astype(d_type)
-            else:
-                alpha = (norm * np.isfinite(data)).astype(d_type)
-        else:
-            alpha = norm * np.ones_like(data).astype(d_type)
-
-        # alpa is set by alpha array, not nan
-        data = np.nan_to_num(data)
-
-        # np.clip values outside interval are clipped:
-        if clip:
-            v_png = (np.clip(data, v_min, v_max) - v_min) / (v_max - v_min)
-        else:
-            v_png = (data - v_min) / (v_max - v_min)
-
-        # png saved as uint
-        png = (norm * v_png).astype(np.uint8)
-
-        if rgb:
-            png_write = np.dstack((png, png, png, alpha))
-        else:
-            png_write = np.dstack((png, alpha))
-
-        # Save png file and try to read it back
-        imageio.imwrite(png_name, png_write)
-        read_file = imageio.imread(png_name)[:, :, :-1]
-
-        # Return string with report of convention.
-        report = '\n%s \nmin v: %s max v: %s bit depth: %s\n' % (
-            png_name, v_min, v_max, bit_depth)
-        report += 'bands: %s interpolation: %s\n' % (
-            np.shape(png_write)[2], interpol_method)
-        report += 'data \t  norm \t  to png \t png \n'
-        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmin(data),
-                                                     np.nanmin(v_png),
-                                                     np.nanmin(png),
-                                                     np.nanmin(read_file))
-        report += '%.3f \t  %.3f \t %s \t  %s \n' % (np.nanmax(data),
-                                                     np.nanmax(v_png),
-                                                     np.nanmax(png),
-                                                     np.nanmax(read_file))
-
-        read_file = None
-        return report
-
-
-class Features(Grid):
-    def __init__(self):
-        super(Features, self).__init__()
-
-    print('I m in sub!!!!')
-
-
-    # Accessories 
-    # Useful functions to build projects. 
-
-    def download(url, filename, check=False):
-        '''
-        Class function to download data to default path.
-
-        '''
-
-        print('Im in download in sub')
-        # Check if already exist
-        if not check:
-            check = there_is_file
-
-        # Download if not
-
-        # To (named) temp
-
-        # Check if zip
-            #Uncompress
-
-        # Check if tar
-            # Uncompress
-        #
-
-        #Check that good
-
-
-
-
-
-
-    #def open(file_name=None):
-    #    '''
-    #    Open dataset from netCDF. 
-    #    file_name string
-    #    returns dataset.
-    #    '''
-    #    if file_name == None:
-    #        file_name = '%s.nc' % type(self).__name__
-    #    return xr.open_dataset(file_name)
-
-

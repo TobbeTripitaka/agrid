@@ -37,7 +37,7 @@
 #SOFTWARE.#
 
 # Install the class and dependencies
-from grid_code.agrid import *
+from agrid.agrid import *
 
 # os in installed with the class 
 env  = Environment(ENV = os.environ ) # only one environment used
