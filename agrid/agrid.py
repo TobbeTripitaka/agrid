@@ -708,7 +708,7 @@ class Grid(object):
 
     #     return None
 
-    def frame_to_ascii(self, 
+    def grid_to_ascii(self, 
                     data, 
                     asc_file_name = 'corners.txt',
                     center = True,
@@ -882,7 +882,8 @@ class Grid(object):
         if mer == None:
             mer = np.arange(-180, 180, 45)
 
-        #pyproj.CRS
+        #New pyproj version to be implimented:
+        #pyproj.CRS 
         #basemap_epsg = to_epsg(self.crs, min_confidence=90)
 
         basemap_epsg = int(re.findall("\d+.\d+", self.crs)[0] )
@@ -902,11 +903,6 @@ class Grid(object):
         ax.axis('off')
 
         if im_data is not None:
-            try:
-                im_data = im_data.values
-            except:
-                pass
-
             if vmin == None:
                 vmin = np.nanpercentile(im_data, 0.1)
             if vmax == None:
@@ -1002,9 +998,6 @@ class Grid(object):
                 ax[k // n_sq, k % n_sq].set_aspect('auto')
                 ax[k // n_sq, k % n_sq].set_ylabel(y_coords.name + x_unit)
                 ax[k // n_sq, k % n_sq].set_xlabel(x_coords.name + y_unit)
-
-                # Print depth values
-                # Print slice in title
 
         fig.tight_layout(pad=0)
         if save:

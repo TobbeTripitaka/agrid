@@ -1,6 +1,5 @@
 
-
-# Features for special use for studies. 
+# Features for special use in studies. 
 
 def read_model(self,
                shape_file_name,
@@ -93,6 +92,7 @@ def export_morse_png(self,
 
     '''
     #Import PyPNG
+    #https://pythonhosted.org/pypng/index.html
     import png
     import numpy as np
 
@@ -173,7 +173,7 @@ def export_morse_png(self,
     elif png_format == 'RGBA': 
         png_write = np.dstack((n_png, n_png, n_png, alpha))
     else:
-        print('Not supported format, try L, LA, RGB or RGBA.')
+        print('Not supported format, use L, LA, RGB or RGBA.')
             
     # Save png file
     png.from_array(png_write.astype(d_type), png_format).save(png_name)
