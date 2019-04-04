@@ -104,10 +104,39 @@
     \path (attributes)+(0,-1) node (grid_attr) [models, minimum height=2em] {class \\ attributes};    
     \path (grid_attr.south)+(-0,-0.6) node (class) {Python class Grid()};
     
+    \path ($(raster_in)+(-2.3,3)$) node (download) [function] {Download};
+    \path ($(download.north)+(0,+0.6)$) node (acc) {Accessory methods};
+    
+    \path [draw, ->] (download.south) --++(0:0mm)|- (ascii_in.west);
+    \path [draw, ->] (download.south) --++(0:0mm)|- (vector_in.west);
+    \path [draw, ->] (download.south) --++(0:0mm)|- (grid_in.west);
+    \path [draw, ->] (download.south) --++(0:0mm)|- (raster_in.west);
+    
+    \path ($(raster_out)+(0,4)$) node (staal) [function] {Staal et al };
+    \path ($(raster_out)+(0,3)$) node (morse) [function] {Morse et al};
+   	\path ($(staal.north)+(0,+0.6)$) node (studies) {Feature methods};
+    
+    \path ($(morse.south)+(0,-1)$) node (png) [outputs] {Global png};
+
+    
+    \path [draw, ->] (download.south) --++(0:0mm)|- (grid_in.west);
+    \path [draw, <->] ($(model.east)+(0,2.1)$) --++(0:0.8)|- (staal.west);
+    \path [draw, ->] ($(model.east)+(0,1.8)$) --++(0:1.2)|- (morse.west);
+    \path [draw, ->] (morse.south) -- node {} (png.north);
+    
     
     \begin{pgfonlayer}{background}  
 		\path[fill=brown!30,rounded corners, draw=black!50]
      		($(raster_proc.west |- model.north)+(-0.2,0.2)$) rectangle ($(raster_out_proc.east |- class.south)+(0.2,0)$);
+     		
+     	\path[fill=brown!30,rounded corners, draw=black!50]
+     	($(acc.west |- acc.north)+(-0.2,0.2)$) rectangle ($(acc.east |- download.south)+(0.2,-0.2)$);
+     		
+     	\path[fill=brown!30,rounded corners, draw=black!50]
+     	($(studies.west |- studies.north)+(-0.2,0.2)$) rectangle ($(studies.east |- morse.south)+(0.2,-0.2)$);
+     	
+     		
+     		
     \end{pgfonlayer}
 \end{tikzpicture}
 

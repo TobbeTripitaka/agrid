@@ -31,7 +31,6 @@
 #SOFTWARE.#
 
 
-
 def export_morse_png(self,
                      data,
                      png_name,
