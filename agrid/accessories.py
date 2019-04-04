@@ -37,6 +37,9 @@ import os
 import zipfile
 import tarfile
 
+import xarray as xr
+import numpy as np
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 def download(url, f_name, 
@@ -84,6 +87,20 @@ def download(url, f_name,
         tar.extractall(path=f_path)
         tar.close()
     
+    return os.path.getsize(f_name)
+
+
+def quick_look_netcdf(f_name):
+    '''
+    '''
+    data = xr.open_dataset(f_name)
+    print(data)
+
+    for array in data.data_vars:
+        plt.imshow(data[array].values)
+        plt.show()
+        info = str(data[array])
+        print(info)
     return os.path.getsize(f_name)
 
 

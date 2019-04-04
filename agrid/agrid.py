@@ -789,7 +789,10 @@ class Grid(object):
         if vmax == None:
             vmax = np.nanpercentile(data, 99.9)
 
-        mlab.options.offscreen = True
+        if show_oblique:
+            mlab.options.offscreen = False
+        else:
+            mlab.options.offscreen = True
 
         mlab.figure(size=(1000, 1000), bgcolor= bgcolor)
         mlab.clf()
@@ -806,7 +809,41 @@ class Grid(object):
 
         mlab.close(all=True)
 
+        # Return obj 
         return None
+
+
+    def volume_slice(self, data, 
+            cmap = 'viridis',
+            vmin = None, 
+            vmax = None, 
+            bgcolor = (1., 1., 1.)):
+        '''Open Mayavi scene
+
+        New function
+        '''
+        try:
+            engine = mayavi.engine
+        except NameError:
+            from mayavi.api import Engine
+        engine = Engine()
+        engine.start()
+
+        if len(engine.scenes) == 0:
+            engine.new_scene()
+        
+        obj = volume_slice(data.values, plane_orientation='x_axes')
+    
+        module_manager = engine.scenes[0].children[0].children[0]
+
+        module_manager.scalar_lut_manager.lut_mode = cmap
+        scene = engine.scenes[0]
+        scene.scene.x_minus_view()
+        
+        return obj
+
+
+
 
     def map_grid(self, im_data,
                  vmin=None,
@@ -1021,7 +1058,7 @@ class Grid(object):
         import holoviews as hv
         hv.extension('bokeh', logo=False)
 
-        data = _user_to_array(data)
+        data = self._user_to_array(data)
 
         ds = hv.Dataset((np.arange(np.shape(data)[2]),
                          np.linspace(0., 1., np.shape(data)[1]),
