@@ -44,6 +44,7 @@ from tqdm import tqdm
 
 def download(url, f_name, 
              un_pack=True, 
+             unpack_path = None,
              check_first=True,
              block_size = 1024):
     '''
@@ -65,26 +66,34 @@ def download(url, f_name,
         r = requests.get(url, stream=True)
         total_size = int(r.headers.get('content-length', 0)); 
         wrote = 0 
+        print('Download:', f_name)
         with open(f_name,'wb') as f:
-            for data in tqdm(r.iter_content(block_size), total=total_size//block_size , unit='KB', unit_scale=True):
+            for data in tqdm(r.iter_content(block_size), 
+                    total=total_size//block_size , 
+                    unit='KB', 
+                    unit_scale=True):
                 wrote = wrote  + len(data)
                 f.write(data)
         if total_size != 0 and wrote != total_size:
-            print("ERROR. ") 
+            print("DOWNLOAD ERROR.") 
 
+        print('Done!')
     else:
         print('File %s already exists.'% f_name)
         
+    if unpack_path == None:
+        unpack_path = f_path
+
     extension = os.path.splitext(f_name)[1]
 
     if extension == '.zip' and un_pack:
         zip_ref = zipfile.ZipFile(f_name, 'r')
-        zip_ref.extractall(f_path)
+        zip_ref.extractall(unpack_path)
         zip_ref.close()
     
     if extension in ['.gz', '.tar'] and un_pack:
         tar = tarfile.open(f_name)
-        tar.extractall(path=f_path)
+        tar.extractall(path=unpack_path)
         tar.close()
     
     return os.path.getsize(f_name)
