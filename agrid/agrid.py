@@ -863,6 +863,7 @@ class Grid(object):
                  title=None,
                  save_name=None,
                  show_map=True,
+                 ax = None,
                  map_res = 'i',
                  draw_coast=True,
                  draw_grid=True,
@@ -935,8 +936,9 @@ class Grid(object):
         if extent == None:
             extent = [self.left, self.right, self.down, self.up]
 
+
         fig = plt.figure(figsize=figsize)
-        ax = plt.axes()
+        ax = ax or plt.axes()
         ax.axis('off')
 
         if im_data is not None:
@@ -987,7 +989,7 @@ class Grid(object):
         if show_map:
             plt.show()
 
-        return None
+        return m
 
     def look(self, rasters, save_name='look.png',
              interp_method=None,
@@ -1043,7 +1045,7 @@ class Grid(object):
 
         if show:
             plt.show()
-        return 0
+        return ax
 
     def slider(self, data,
                kdims=['z', 'x', 'y'],
