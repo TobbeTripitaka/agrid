@@ -91,11 +91,17 @@ def download(url, f_name,
         zip_ref.extractall(unpack_path)
         zip_ref.close()
     
-    if extension in ['.gz', '.tar'] and un_pack:
+    elif extension in ['.gz', '.tar'] and un_pack:
         tar = tarfile.open(f_name)
         tar.extractall(path=unpack_path)
         tar.close()
-    
+
+    elif extension == '.bz2' and un_pack:
+        tar = tarfile.open("path_to/test/sample.tar.bz2", "r:bz2")  
+        tar.extractall(path=unpack_path)
+        tar.close()
+
+
     return os.path.getsize(f_name)
 
 
