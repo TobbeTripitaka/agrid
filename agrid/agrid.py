@@ -6,7 +6,6 @@
 
 # https://doi.org/10.5281/zenodo.2553966
 #
-
 #MIT License#
 
 #Copyright (c) 2019 Tobias Stål#
@@ -58,6 +57,10 @@ from rasterio.plot import reshape_as_image, reshape_as_raster
 # Mayavi and Bokeh are imported in methods, when needed. 
 
 km = 1000
+
+
+print('agrid.py')
+
 
 class Grid(object):
     '''
@@ -221,6 +224,55 @@ class Grid(object):
             im_data = im_data.values # if data frame
         return im_data
 
+
+    def meta_to_dict(self, 
+            f_name = '', 
+            meta_dict = {}, 
+            get_meta_data=True, 
+            meta_file = None):
+        '''Open JSON to dict
+        f_name : string file to import, suffix is not used
+
+        meta_dict : Dictionary with meta data
+        get_meta_data : reads metadata from json file
+        meta_file : path to JSAOn file, if not included same name as data file 
+        returns : dict
+        '''
+        if get_meta_data:
+            if meta_file == None:
+                meta_name = os.path.splitext(f_name)[0] + '.json'
+            if os.path.isfile(meta_name):     
+                with open(meta_name, 'r') as fp:
+                    meta_dict = {**meta_dict, **json.loads(fp.read()) }
+            #else:
+            #    print('No json file.') # Add support for other formats
+
+        return meta_dict
+
+    def data_to_grid(self, 
+            data, 
+            dims_order = ['Y', 'X', 'Z', 'T'],
+            **kwargs):
+        '''Convenience function 
+        data : numpy array in the right size
+        dims_order: list of order to fit dims of array with grid model
+        kwargs sent to meta_to_dict:
+            meta_dict dict with meta data
+            
+
+
+        '''
+        dims = dims_order[:data.ndim]
+
+        #Look for meta data and write to attrs
+        meta_data = self.meta_to_dict(**kwargs)
+
+        return xr.DataArray(data, dims=dims, attrs = meta_data) 
+
+
+
+
+
     def save(self, data=None, file_name='grid.nc'):
         '''
         Saves dataset to netCDF. 
@@ -324,7 +376,7 @@ class Grid(object):
                                                     np.shape(large.values)[1])
 
     # Import data
-    def assign_shape(self, shape_file, attribute=None,
+    def assign_shape(self, f_name, attribute=None,
                      z_dim=False, z_max='z_max', z_min='z_min',
                      all_touched=True, 
                      burn_val=None,
@@ -354,7 +406,7 @@ class Grid(object):
         https://gis.stackexchange.com/questions/216745/get-polygon-shapefile-in-python-shapely-by-clipping-linearring-with-linestring/216762
         '''
 
-        shape = gpd.read_file(shape_file).to_crs(self.crs)
+        shape = gpd.read_file(f_name).to_crs(self.crs)
 
         if burn_val != None:
             shape[attribute] = [burn_val] * len(shape)
@@ -525,7 +577,7 @@ class Grid(object):
                                     **kwargs)
 
     def read_raster(self,
-                    raster_name,
+                    f_name,
                     src_crs=None,
                     source_extra=500,
                     resampling=None,
@@ -563,7 +615,7 @@ class Grid(object):
 
         #import rasterio.windows
 
-        in_raster = rasterio.open(raster_name)
+        in_raster = rasterio.open(f_name)
 
         if src_crs == None:
             src_crs = in_raster.crs
@@ -1006,7 +1058,6 @@ class Grid(object):
         Keyword arguments:
         interp_method -- imshow interpolation methods
         
-
         Rather undeveloped function. 
         """
 
