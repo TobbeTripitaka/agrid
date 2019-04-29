@@ -258,7 +258,7 @@ class Grid(object):
         dims_order: list of order to fit dims of array with grid model
         kwargs sent to meta_to_dict:
             meta_dict dict with meta data
-            
+
 
 
         '''
@@ -268,9 +268,6 @@ class Grid(object):
         meta_data = self.meta_to_dict(**kwargs)
 
         return xr.DataArray(data, dims=dims, attrs = meta_data) 
-
-
-
 
 
     def save(self, data=None, file_name='grid.nc'):
@@ -1093,7 +1090,6 @@ class Grid(object):
         if save:
             fig.savefig(save_name, transparent=True,
                         bbox_inches='tight', pad_inches=0)
-
         if show:
             plt.show()
         return ax

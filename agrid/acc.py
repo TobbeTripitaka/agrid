@@ -45,11 +45,13 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 def download(url, 
-            f_name, 
+            f_name,
+            data_files = [],
             un_pack=True, 
             unpack_path = None,
             check_first=True,
             block_size = 1024,
+            confirm_data = True,
             make_meta = True, 
             meta_dict = {}):
     '''
@@ -81,7 +83,10 @@ def download(url,
                 f.write(data)
         if total_size != 0 and wrote != total_size:
             print("DOWNLOAD ERROR.") 
-        meta_dict = {**meta_dict, **{'url' : url, 'accessed' : str(datetime.datetime.now()), 'size' : os.path.getsize(f_name)}}
+        meta_dict = {**meta_dict, **{
+            'url' : url, 
+            'accessed' : str(datetime.datetime.now()), 
+            'total_size' : os.path.getsize(f_name)}}
     else:
         print('File %s already exists.'% f_name)
         
@@ -105,10 +110,23 @@ def download(url,
         tar.extractall(path=unpack_path)
         tar.close()
 
-    meta_name = os.path.splitext(f_name)[0] + '.json'
-    if not os.path.isfile(meta_name) and make_meta:
-        with open(meta_name, 'w') as fp:
-            json.dump(meta_dict, fp)
+    #Select files to chack and generate meta files for
+    if data_files == []:
+        data_files = [f_name]
+
+    # Check that we got the file(s) and make meta files
+    for data_file in data_files:
+        if os.path.isfile(data_file):
+            print('Saved: ', data_file)
+            if make_meta:
+                meta_name = os.path.splitext(data_file)[0] + '.json' 
+                data_meta_dict = {**meta_dict, **{'data_size' :  os.path.getsize(data_file)} }
+
+                if not os.path.isfile(meta_name):
+                    with open(meta_name, 'w') as fp:
+                        json.dump(data_meta_dict, fp)
+        else:
+            print('Missing', data_file)
 
     return meta_dict
 
