@@ -54,13 +54,9 @@ from rasterio.windows import Window
 from rasterio.plot import reshape_as_image, reshape_as_raster
 
 ###
-# Mayavi and Bokeh are imported in methods, when needed. 
+# Mayavi, Bokeh etc are imported in methods, when needed. 
 
 km = 1000
-
-
-print('agrid.py')
-
 
 class Grid(object):
     '''
