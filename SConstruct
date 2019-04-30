@@ -91,7 +91,6 @@ def make_maps_fig_2(target, source, env):
 # Define Python functions as builders
 env.Append( BUILDERS = {'Make_Maps' : Builder(action = make_maps_fig_2)})
 
-
 download_data = False
 
 # Build Fig 1 Flow chart (TikZ)
