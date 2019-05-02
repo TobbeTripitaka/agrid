@@ -6,10 +6,10 @@ A grid for modelling, analyse, map and visualise multidimensional and multivaria
 
 Main features:
   - Named coordinates using xarray
-  - Cunning approach to process high resolution and low resolution data quickly
-  - Dask arrays
+  - Fast process of high resolution and low resolution data
+  - Using dask arrays
   - 2D map plots and cross-sections
-  - 3D visualisation. 
+  - 3D visualisation
   - Features for modelling, analysis and visualisation
  
 The repo contains: 
@@ -23,16 +23,14 @@ The repo contains:
  
 To come soon: 
  - Software Meta-paper
- - More code
+ - Updates
 
 ---
 
-
-
 This shared code can be used as a package or just copy and paste snippets into your project. I've tried to keep the dependencies to a minimum and let the functions be rather independent. 
-
 Future development: 
 
  - Non regular grids
  - Hexagonal grids
+ - More visualisation option
  - More robust import functions
