@@ -1,0 +1,150 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{shapes,arrows}
+\usepackage{amsmath,bm,times}
+\newcommand{\mx}[1]{\mathbf{\bm{#1}}} % Matrix command
+\newcommand{\vc}[1]{\mathbf{\bm{#1}}} % Vector command
+
+\begin{document}
+%\pagestyle{empty}
+%	\centering
+
+% Define layers to draw the block diagram
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+% Define colors
+\colorlet{a_gray}{black!18}
+\colorlet{a_brown}{black!28!brown!16}
+\colorlet{a_pale_brown}{black!16!brown!10}
+\colorlet{a_pale_gray}{black!14}
+\colorlet{a_meta_green}{black!50!green!20!}
+\colorlet{a_meta_dark_green}{black!72!green!74!}
+
+% Define a few styles and constants
+\tikzstyle{block} = [draw, text width=8em, text centered, minimum height=2.2em]
+
+\tikzstyle{inputs}=[block, fill=a_pale_brown]
+\tikzstyle{outputs} = [block, fill=a_pale_brown]
+\tikzstyle{function} = [block, text width=6em, fill=a_brown]
+\tikzstyle{models} = [block, text width=6em, fill=a_gray, rounded corners]
+\tikzstyle{sub_models} = [block, text width=4em, fill=a_pale_gray, minimum width=4em]
+\tikzstyle{sub_coords} = [block, text width=3.2em, minimum width=4em, minimum height=4em, fill=a_pale_gray]
+\tikzstyle{sub_data} = [block, text width=4em, fill=a_pale_gray]
+\tikzstyle{meta_data} = [block, text width=4em, fill=a_meta_green]
+    
+%anotate arrows    
+\tikzstyle{ann} = [above, text width=5em]
+
+% Define some distances
+\def\blockdist{4}
+\def\external{8}
+\def\edgedist{2.5}
+
+\tikzset{>=latex}
+
+% Make some macros
+\newcommand{\InputBlock}[7]{% node1, hight, label1, node2, label2, arrow1, arrow2
+	\path (model)+(-\external,#2) node (#1) [inputs] {#3};
+	\path (model)+(-\blockdist,#2) node (#4) [function] {#5};
+	\path [draw, ->, thick] (#1.east |- #1.east) -- node [above, pos=0.4,] {\tiny{#6}} (#4.west |- #4.west);
+    \path [draw, ->, thick] (#4.east |- #4.east) -- node [above] {\tiny{#7}} (model.west |- #4.west);
+     \path [draw, ->, thick] ($(download.south)+(0.15, 0)$) |- (#1.west);
+}
+
+\newcommand{\OutputBlock}[7]{% node1, hight, label1, node2, label2, arrow1, arrow2
+	\path (model)+(\blockdist,#2) node (#1) [function] {#3};
+	\path (model)+(\external,#2) node (#4) [outputs] {#5};
+	\path [draw, ->, thick] (model.east |- #1.west) -- node [above] {\tiny{#6}} (#1.west |- #1.west);
+	\path [draw, ->, thick] (#1.east |- #4.west) -- node [above] {\tiny{#7}} (#4.west |- #4.west);
+}
+
+
+\begin{tikzpicture}
+\sffamily
+	%xarray dataset, in center of fig
+    \node (model) [models, minimum height=5cm, minimum width=4cm, text depth=0cm] {xarray Dataset};
+    
+    		\path (model.140)+(1.3,0) node () [] {};
+   		 	\path[draw=black, thick] (0.5,-1) -- (0.5,-2) -- (1.5,-2);
+    		\path[draw=black, thick] (0.5,-2) -- (1,-1.5);
+    		\path (1.1,-1.2) node () {dims};
+    
+    		\path (model.150)+(1.02,0.7) node (sub_model) [sub_models] {};
+    		\path (model.150)+(1.08,0.6) node (sub_model) [sub_models] {};
+			\path (model.150)+(1.14,0.5) node (sub_model) [sub_models] {};
+    		\path (model.150)+(1.2,0.4) node (dataarray) [sub_models] {DataArray};
+    		\path (model.150)+(1.2,-2.8) node (meta_data) [meta_data] {meta data};
+    		\path (model.150)+(3,0.5) node (coords) [sub_coords] {\small{coords}};
+    
+
+    \path ($(model)+(-10.5,5)$) node (download) [function] {Download};
+	\path ($(download.north)+(0,+0.6)$) node (acc) {Accessory methods};
+
+    \path ($(model)+(8,5)$) node (staal) [function] {Staal et al };
+	\path ($(model)+(8,4)$) node (morse) [function] {Morse et al};
+	\path ($(staal.north)+(0,+0.6)$) node (studies) {Feature methods};
+	\path ($(morse.south)+(0,-1)$) node (png) [outputs] {Global png};
+
+
+
+   % inputs
+   \InputBlock{raster_in}{1}{Raster data}{raster_proc}{Affine transformation}{geoTiff}{numpy}
+   \InputBlock{vector_in}{0}{Vector data}{vector_proc}{Rasterization}{geoTiff}{numpy}
+   \InputBlock{grid_in}{-1}{Grid data}{grid_proc}{Interpolation}{netCDF}{numpy}
+   \InputBlock{ascii_in}{-2}{ASCII data}{ascii_proc}{Interpolation}{ascii}{numpy}
+   
+   % outputs
+   \OutputBlock{raster_out_proc}{1}{rasterio}{raster_out}{Raster}{numpy}{geoTiff}
+   \OutputBlock{fig_out_proc}{0}{matplotlib}{fig_out}{Map}{numpy}{pdf}
+   \OutputBlock{3D_out_proc}{-1}{mayavi}{3D_out}{3D viz}{numpy}{screen / pdf}
+   \OutputBlock{grid_out_proc}{-2}{xarray}{grid_out}{Grid export}{xarray}{netCDF}
+   
+	%xarray    
+    \path (model)+(0,-3.5) node (attributes) [models, minimum height=2em] {instance \\ attributes};    
+    \path [draw, <->, thick] (model) -- node {} (model.south |- attributes.north);
+
+    \path (model)+(0,3.4) node (python) [models, minimum height=2em] {Python};    
+    \path [draw, <->, thick] (model) -- node {} (model.north |- python.south);
+   
+   \path (model)+(0,4.6) node (python_api) [models, minimum height=2em] {Python api};    
+	\path [draw, <->, thick] (python_api) -- node {} (python_api.south |- python.north);
+
+    \path (attributes)+(0,-1) node (grid_attr) [models, minimum height=2em] {class \\ attributes};    
+    \path (grid_attr.south)+(-0,-0.6) node (class) {Python class Grid()};
+    
+
+    \path [draw, <->, thick] ($(model.east)+(0,2.1)$) --++(0:0.8)|- (staal.west);
+    \path [draw, ->, thick] ($(model.east)+(0,1.8)$) --++(0:1.2)|- (morse.west);
+    \path [draw, ->, thick] (morse.south) -- node {} (png.north);
+    
+    %Meta data
+    \draw[->,a_meta_dark_green, thick] ($(download.south)+(-0.15,0)$) 
+    -- ($(download.south |- meta_data.south)+(-0.15,-0.6)$) 
+    -- ($(meta_data.south)+(0,-0.6)$)
+    -- (meta_data.south);
+
+     \draw[->,a_meta_dark_green, thick] (meta_data.north) -- (dataarray.south); 
+    
+    
+    \begin{pgfonlayer}{background}  
+		\path[fill=brown!30,rounded corners, draw=black!50]
+     		($(raster_proc.west |- model.north)+(-0.2,0.2)$) rectangle ($(raster_out_proc.east |- class.south)+(0.2,0)$);
+     		
+     	\path[fill=brown!30,rounded corners, draw=black!50]
+     	($(acc.west |- acc.north)+(-0.2,0.2)$) rectangle ($(acc.east |- download.south)+(0.2,-0.2)$);
+     		
+     	\path[fill=brown!30,rounded corners, draw=black!50]
+     	($(studies.west |- studies.north)+(-0.2,0.2)$) rectangle ($(studies.east |- morse.south)+(0.2,-0.2)$);
+     	
+     		
+     		
+    \end{pgfonlayer}
+\end{tikzpicture}
+
+
+
+\end{document}

@@ -395,7 +395,7 @@ class Grid(object):
         Thanks: 
         https://gis.stackexchange.com/questions/216745/get-polygon-shapefile-in-python-shapely-by-clipping-linearring-with-linestring/216762
         '''
-
+        
         shape = gpd.read_file(f_name).to_crs(self.crs)
 
         if burn_val != None:
