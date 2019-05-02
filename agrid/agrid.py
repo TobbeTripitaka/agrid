@@ -2,7 +2,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.5.0'
+# version = '0.1.0'
 
 # https://doi.org/10.5281/zenodo.2553966
 #
@@ -254,9 +254,6 @@ class Grid(object):
         dims_order: list of order to fit dims of array with grid model
         kwargs sent to meta_to_dict:
             meta_dict dict with meta data
-
-
-
         '''
         dims = dims_order[:data.ndim]
 
@@ -373,9 +370,9 @@ class Grid(object):
                      z_dim=False, z_max='z_max', z_min='z_min',
                      all_touched=True, 
                      burn_val=None,
-                     map_to_int = False, 
+                     map_to_int = True, 
                      save_map_to_text = None, 
-                     return_map = True,
+                     return_map = False,
                      fill_value = np.nan, 
                      **kwargs):
         '''Rasterize vector polygons to grid 
@@ -448,7 +445,7 @@ class Grid(object):
                 all_touched=all_touched,
                 **kwargs)
     
-        if (map_to_int == True and return_map == True):
+        if (map_to_int and return_map):
             return data, moby_dict
         else:
             return data
@@ -858,34 +855,56 @@ class Grid(object):
         return None
 
 
-    def volume_slice(self, data, 
+    def volume_slice(self, data,
+            save_name=None,  
             cmap = 'viridis',
             vmin = None, 
             vmax = None, 
+            show_slice = False, 
             bgcolor = (1., 1., 1.)):
         '''Open Mayavi scene
 
         New function
         '''
-        try:
-            engine = mayavi.engine
-        except NameError:
-            from mayavi.api import Engine
-        engine = Engine()
-        engine.start()
 
-        if len(engine.scenes) == 0:
-            engine.new_scene()
+        # Import mlab
+        from mayavi import mlab
+
+        #try:
+        #    engine = mayavi.engine
+        #except NameError:
+        #    from mayavi.api import Engine
+        #engine = Engine()
+        #engine.start()
+
+        if vmin == None:
+            vmin = np.nanpercentile(data, 0.1)
+        if vmax == None:
+            vmax = np.nanpercentile(data, 99.9)
+
+        #if len(engine.scenes) == 0:
+        #    engine.new_scene()
         
-        obj = volume_slice(data.values, plane_orientation='x_axes')
+        mlab.figure(size=(1000, 1000), bgcolor= bgcolor)
+        mlab.clf()
+
+        mlab.volume_slice(data.values, plane_orientation='x_axes')
+
+        mlab.view(azimuth=azimuth, elevation=elevation, distance=distance, roll=roll)
     
-        module_manager = engine.scenes[0].children[0].children[0]
+        #module_manager = engine.scenes[0].children[0].children[0]
 
-        module_manager.scalar_lut_manager.lut_mode = cmap
-        scene = engine.scenes[0]
-        scene.scene.x_minus_view()
+        #module_manager.scalar_lut_manager.lut_mode = cmap
+        #scene = engine.scenes[0]
+        #scene.scene.x_minus_view()
         
-        return obj
+        if save_name != None:
+            mlab.savefig(save_name, size=(1000, 1000))
+
+        if show_slice:
+            mlab.show()
+
+        return 
 
 
 

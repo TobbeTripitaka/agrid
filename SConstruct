@@ -16,7 +16,7 @@
 
 #MIT License#
 
-#Copyright (c) 2019 Tobias Stål#
+#Copyright (c) 2019 Tobias Stål Anya M. Reading#
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,9 +53,10 @@ def make_maps_fig_2(target, source, env):
 	drainage, int_map = ant.assign_shape(str(source[1]),'ID', map_to_int = True, return_map = True)
 	ant.ds['DRAINAGE'] = (('Y', 'X'), drainage)
 
+
 	# Use ID from dict to select segments of map. Divide with value of integer class to get 1 
 	# 2-18
-	polygons = [int_map[str(x) + 'g'] for x in range(8,20)] # Grounded drainage areas
+	polygons = list(range(0, 53//2))
 	ant.ds['EAST_ICE'] = ant.ds['ICE']*ant.ds['DRAINAGE'].isin(polygons) #Select only ice in polygons
 
 	ant.ds['DEM'] = (('Y', 'X'), 
@@ -64,20 +65,16 @@ def make_maps_fig_2(target, source, env):
 
 	#Make maps
 	ant.map_grid('DRAINAGE', 
-		cmap='Spectral', 
+		cmap='RdBu', 
 		save_name=str(target[0]), 
 		show_map=False)
-	ant.map_grid('ICE', 
+	ant.map_grid('EAST_ICE', 
 		cmap='viridis', 
 		cbar=True, 
 		save_name=str(target[1]), 
 		show_map=False)
-	ant.map_grid('EAST_ICE', 
-		cmap='viridis', 
-		save_name=str(target[2]), 
-		show_map=False)
 	ant.oblique_view('DEM', 
-		save_name = str(target[3]),
+		save_name = str(target[2]),
 		vmin= 0, vmax=4200, 
 		cmap='bone' ,
 		azimuth=180,
@@ -91,7 +88,7 @@ def make_maps_fig_2(target, source, env):
 # Define Python functions as builders
 env.Append( BUILDERS = {'Make_Maps' : Builder(action = make_maps_fig_2)})
 
-download_data = False
+download_data = True
 
 # Build Fig 1 Flow chart (TikZ)
 fig_1= env.PDF(target = 'fig/fig_1.pdf', 
@@ -99,7 +96,7 @@ fig_1= env.PDF(target = 'fig/fig_1.pdf',
 
 
 # Build Fig 2
-sub_figs = ['fig/drainage.pdf', 'fig/ice.pdf', 'fig/selected.pdf', 'fig/oblique_view.png', 'fig/oblique_top.png']
+sub_figs = ['fig/drainage.pdf', 'fig/selected.pdf', 'fig/oblique_view.png']
 env.Make_Maps(target = sub_figs, 
 	source = ['data/bedmap2_tiff/bedmap2_thickness.tif', 
 	'data/GSFC_DrainageSystems.shp', 
