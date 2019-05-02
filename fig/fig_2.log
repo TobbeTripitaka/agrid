@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.4.6)  2 MAY 2019 13:30
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.4.6)  2 MAY 2019 17:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -381,7 +381,8 @@ File: pgfmodulematrix.code.tex 2019/02/02 v3.1.1 (3.1.1)
 (/usr/local/texlive/2018/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
 s/tikzlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2019/02/02 v3.1.1 (3.1.1)
-))) (./fig_2.aux)
+)))
+No file fig_2.aux.
 \openout1 = `fig_2.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 8.
@@ -396,7 +397,6 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 8.
 LaTeX Font Info:    ... okay on input line 8.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 8.
 LaTeX Font Info:    ... okay on input line 8.
-
 ABD: EveryShipout initializing macros
 (/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -487,8 +487,8 @@ pdfTeX warning: pdflatex (file ../fig/selected.pdf): PDF inclusion: multiple pd
 fs with page group included in a single page
 >] (./fig_2.aux) ) 
 Here is how much of TeX's memory you used:
- 12041 strings out of 492616
- 246778 string characters out of 6128983
+ 12039 strings out of 492616
+ 246758 string characters out of 6128983
  283663 words of memory out of 5000000
  15725 multiletter control sequences out of 15000+600000
  4546 words of font info for 17 fonts, out of 8000000 for 9000
