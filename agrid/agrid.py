@@ -395,7 +395,7 @@ class Grid(object):
         Thanks: 
         https://gis.stackexchange.com/questions/216745/get-polygon-shapefile-in-python-shapely-by-clipping-linearring-with-linestring/216762
         '''
-        
+
         shape = gpd.read_file(f_name).to_crs(self.crs)
 
         if burn_val != None:
@@ -450,15 +450,16 @@ class Grid(object):
         else:
             return data
 
-    def read_grid(self, f_name,
-                  xyz=('x', 'y', 'z'),
-                  interpol='linear',
-                  crs_src=None,
-                  crs=None,
-                  only_frame=True,
-                  deep_copy=False,
-                  set_center=False, 
-                  **kwargs):
+    def read_grid(self, 
+                f_name,
+                xyz=('x', 'y', 'z'),
+                interpol='linear',
+                crs_src=None,
+                crs=None,
+                only_frame=True,
+                deep_copy=False,
+                set_center=False, 
+                **kwargs):
 
         '''Read irregular (or regular) grid. Resampling and interpolating. 
 
@@ -487,12 +488,17 @@ class Grid(object):
         if set_center:
             x = self._set_meridian(x)
 
-        xx, yy = np.meshgrid(x, y)
+        xx, yy = np.meshgrid(x, y) #x, y
         xv, yv = proj.transform(proj.Proj(crs_src),
                                 proj.Proj(crs), xx, yy)
 
         zv = array[xyz[2]].values
         n = zv.size
+
+        #print('n', n)
+        #print('zv', np.shape(zv), zv)
+        #print('xv', np.shape(xv), xv)
+        #print('yv', np.shape(yv), yv)
 
         zi = np.reshape(zv, (n))
         xi = np.reshape(xv, (n))
@@ -541,7 +547,7 @@ class Grid(object):
         if crs_src == None:
             crs_src = self.crs_src
 
-        table = np.loadtxt(f_name, skiprows= skiprows)  # Add kwargs
+        table = np.loadtxt(f_name, skiprows= skiprows, **kwargs)  # Add kwargs
 
         if self.verbose:
             print(table[:5, :])
