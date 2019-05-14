@@ -793,6 +793,21 @@ class Grid(object):
         return os.path.getsize(asc_file_name)
 
 
+
+    def bins_to_grid(self, 
+        data,
+        function = 'mean'):
+        '''
+        Function to eread data in to bins
+        '''
+
+
+
+
+
+
+        return None
+
 # Vizualisations
     def extract_profile():
         '''
