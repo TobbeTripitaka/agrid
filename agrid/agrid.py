@@ -925,7 +925,7 @@ class Grid(object):
         if show_slice:
             mlab.show()
 
-        return 
+        return None 
 
 
 
