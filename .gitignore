@@ -8,3 +8,6 @@ data/*
 local/*
 #
 tutorials/.ipynb_checkpoints/*
+
+#
+.ipynb_checkpoints/*
