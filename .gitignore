@@ -10,7 +10,7 @@ tutorials/.ipynb_checkpoints/*
 
 .ipynb_checkpoints/*
 
-agrid/__pycache__
+agrid/__pycache__/*
 
 fig/*
 !fig/*.tex
