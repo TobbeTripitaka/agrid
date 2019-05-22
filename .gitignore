@@ -16,3 +16,6 @@ fig/*
 !fig/*.tex
 !fig/*.pdf
 !fig/*.png
+
+tex/*
+!tex/*.tex
