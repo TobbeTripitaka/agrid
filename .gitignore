@@ -1,16 +1,11 @@
 .DS_Store
-
 .sconsign.dblite
 
 data/*
-
 local/*
 
-tutorials/.ipynb_checkpoints/*
-
-.ipynb_checkpoints/*
-
-agrid/__pycache__/*
+.ipynb_checkpoints/
+__pycache__/
 
 fig/*
 !fig/*.tex
