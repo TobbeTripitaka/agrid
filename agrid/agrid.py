@@ -38,7 +38,7 @@ import pyproj as proj
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-from scipy import interpolate 
+from scipy import interpolate
 import scipy.ndimage
 
 import pandas as pd
@@ -54,9 +54,10 @@ from rasterio.windows import Window
 from rasterio.plot import reshape_as_image, reshape_as_raster
 
 ###
-# Mayavi, Bokeh etc are imported in methods, when needed. 
+# Mayavi, Bokeh etc are imported in methods, when needed.
 
 km = 1000
+
 
 class Grid(object):
     '''
@@ -64,7 +65,7 @@ class Grid(object):
 
     '''
 
-    #Switch for print statements
+    # Switch for print statements
     verbose = False
 
     def __init__(self,
@@ -76,9 +77,10 @@ class Grid(object):
                  right=-180,
                  down=-90,
                  res=[1, 1],
-                 set_frame = True, 
-                 center = False,
+                 set_frame=True,
+                 center=False,
                  depths=[0. * km, 8. * km, 16. * km, 40. * km, 350. * km],
+                 huge=1e5,
                  crs=4326,
                  crs_src=4326,
                  band_coord='RGB',
@@ -94,11 +96,11 @@ class Grid(object):
         # adjust grid to centre points rather than outer extent:
         if set_frame:
             if center:
-                left += res[0]/2
-                right -= res[0]/2
-                up -= res[1]/2
-                down += res[1]/2
-            else: #lower left corner
+                left += res[0] / 2
+                right -= res[0] / 2
+                up -= res[1] / 2
+                down += res[1] / 2
+            else:  # lower left corner
                 right -= res[0]
                 up -= res[1]
 
@@ -121,6 +123,9 @@ class Grid(object):
         self.ny = int(abs(down - up) // res[1])
         self.nn = (self.ny, self.nx)
 
+        if self.nx > huge or self.ny > huge:
+            print('The array is too large:', self.nn)
+
         self.transform = rasterio.transform.from_bounds(
             left, down, right, up, self.nx, self.ny)
         self.coord_d_type = coord_d_type
@@ -135,9 +140,8 @@ class Grid(object):
         self.ds.coords['Y'] = np.linspace(
             up, down, self.ny).astype(self.coord_d_type)
         self.nz = len(depths)
-        
+
         self.ds.coords['Z'] = np.array(depths).astype(coord_d_type)
-        
 
         self.ds.coords[band_coord] = list(band_coord)
 
@@ -150,7 +154,7 @@ class Grid(object):
         self.ds.coords['XV'] = (('Y', 'X'), self.xv.astype(coord_d_type))
         self.ds.coords['YV'] = (('Y', 'X'), self.yv.astype(coord_d_type))
 
-        #Define projections as proj4 strings
+        # Define projections as proj4 strings
         if isinstance(crs, int):
             crs = '+init=epsg:' + str(crs)
 
@@ -162,7 +166,6 @@ class Grid(object):
 
         self.lon, self.lat = proj.transform(proj.Proj(self.crs),
                                             proj.Proj(init='epsg:4326'), self.xv, self.yv)
-
 
         self.ds.coords['lat'] = (('Y', 'X'), self.lat.astype(coord_d_type))
         self.ds.coords['lon'] = (('Y', 'X'), self.lon.astype(coord_d_type))
@@ -208,24 +211,24 @@ class Grid(object):
             x_array[x_array < 0] = x_array[x_array < 0] + 360
         return x_array
 
-
     def _user_to_array(self, im_data):
         '''Reads user input to numpy array. 
         '''
         if isinstance(im_data, str):
             im_data = self.ds[im_data].values
-        elif isinstance(im_data, (np.ndarray, np.generic) ):
-            pass # if numpy array
+        elif isinstance(im_data, list):
+            im_data = np.array(im_data)
+        elif isinstance(im_data, (np.ndarray, np.generic)):
+            pass  # if numpy array
         else:
-            im_data = im_data.values # if data frame
+            im_data = im_data.values  # if data frame
         return im_data
 
-
-    def meta_to_dict(self, 
-            f_name = '', 
-            meta_dict = {}, 
-            get_meta_data=True, 
-            meta_file = None):
+    def meta_to_dict(self,
+                     f_name='',
+                     meta_dict={},
+                     get_meta_data=True,
+                     meta_file=None):
         '''Open JSON to dict
         f_name : string file to import, suffix is not used
 
@@ -235,20 +238,20 @@ class Grid(object):
         returns : dict
         '''
         if get_meta_data:
-            if meta_file == None:
+            if meta_file is None:
                 meta_name = os.path.splitext(f_name)[0] + '.json'
-            if os.path.isfile(meta_name):     
+            if os.path.isfile(meta_name):
                 with open(meta_name, 'r') as fp:
-                    meta_dict = {**meta_dict, **json.loads(fp.read()) }
-            #else:
+                    meta_dict = {**meta_dict, **json.loads(fp.read())}
+            # else:
             #    print('No json file.') # Add support for other formats
 
         return meta_dict
 
-    def data_to_grid(self, 
-            data, 
-            dims_order = ['Y', 'X', 'Z', 'T'],
-            **kwargs):
+    def data_to_grid(self,
+                     data,
+                     dims_order=['Y', 'X', 'Z', 't'],
+                     **kwargs):
         '''Convenience function 
         data : numpy array in the right size
         dims_order: list of order to fit dims of array with grid model
@@ -257,11 +260,10 @@ class Grid(object):
         '''
         dims = dims_order[:data.ndim]
 
-        #Look for meta data and write to attrs
+        # Look for meta data and write to attrs
         meta_data = self.meta_to_dict(**kwargs)
 
-        return xr.DataArray(data, dims=dims, attrs = meta_data) 
-
+        return xr.DataArray(data, dims=dims, attrs=meta_data)
 
     def save(self, data=None, file_name='grid.nc'):
         '''
@@ -269,20 +271,20 @@ class Grid(object):
         file_name string
         returns size of file.
         '''
-        if data == None:
+        if data is None:
             data = self.ds
         data.to_netcdf(file_name)
         return os.path.getsize(file_name)
 
-    def save_info(self, ds=None, file_name='info.txt', write_coords = False, 
-        **kwargs):
+    def save_info(self, ds=None, file_name='info.txt', write_coords=False,
+                  **kwargs):
         '''Save json file with instance parameters
         Keyword arguments:
         write_coords -- writes complete list of coordinates '''
-        if ds == None:
+        if ds is None:
             ds = self.ds
 
-        if file_name == None:
+        if file_name is None:
             file_name = 'info.txt'
 
         info = self.__dict__.copy()
@@ -292,7 +294,7 @@ class Grid(object):
             if write_coords:
                 info[array] = info[array].tolist()
             else:
-                info[array] = info[array][[0,0,-1,-1],[0,-1,0,-1]].tolist()
+                info[array] = info[array][[0, 0, -1, -1], [0, -1, 0, -1]].tolist()
 
         with open(file_name, 'w') as outfile:
             json.dump(info, outfile, indent=4, ensure_ascii=False, **kwargs)
@@ -302,7 +304,7 @@ class Grid(object):
     def land_mask(self, polygon_frame=None, polygon_res=None, all_touched=True, land_true=True):
         '''Create a 2D array with only land '''
 
-        if polygon_frame == None:
+        if polygon_frame is None:
             pass
             # Download global vector file in with the resolution option of
             # polygon_res=None)
@@ -316,11 +318,11 @@ class Grid(object):
                      new,
                      fill_value=np.nan,
                      interpol='linear',
-                     axis=2,
-                     bounds_error=False, 
+                     axis=None,
+                     bounds_error=False,
                      **kwargs):
         '''Interpolate dimension into new defined depth from coord or list. 
-        
+
         Keyword arguments:
         array -- np.array, list or dataset to be interpolated at new points
                     if array is a string, it will be converted to data frame in self
@@ -329,15 +331,22 @@ class Grid(object):
         interpol -- interpolation method, e.g. nearest, linear or cubic
         fill_value -- extrapolation value
         '''
-        for label in [array, old, new]:
-            label = self._user_to_array(label)
+        array = self._user_to_array(array)
+        old = self._user_to_array(old)
+        new = self._user_to_array(new)
+
+        # If none, use last dim!
+        if axis is None:
+            axis = 2
+        if array.ndim == 1:
+            axis = 0
 
         return interpolate.interp1d(old,
                                     array,
                                     axis=axis,
                                     bounds_error=bounds_error,
                                     kind=interpol,
-                                    fill_value=fill_value, 
+                                    fill_value=fill_value,
                                     **kwargs)(new)
 
     def fold_to_low_res(self, large, small):
@@ -359,7 +368,7 @@ class Grid(object):
 
     def flatten_to_high_res(self, folded, large):
         '''Flatten a processed array back to high dimension. Reverse of fold_to_low_res. 
-        
+
         Returns a high resolution array. 
         '''
         return folded.transpose(0, 2, 1, 3).reshape(np.shape(large.values)[0],
@@ -368,15 +377,15 @@ class Grid(object):
     # Import data
     def assign_shape(self, f_name, attribute=None,
                      z_dim=False, z_max='z_max', z_min='z_min',
-                     all_touched=True, 
+                     all_touched=True,
                      burn_val=None,
-                     map_to_int = True, 
-                     save_map_to_text = None, 
-                     return_map = False,
-                     fill_value = np.nan, 
+                     map_to_int=True,
+                     save_map_to_text=None,
+                     return_map=False,
+                     fill_value=np.nan,
                      **kwargs):
         '''Rasterize vector polygons to grid 
-        
+
         Keyword arguments:
         attribute -- Attribute values to be burned to raster
         z_dim -- Make 3D raster with attributes assigned to layers
@@ -404,10 +413,10 @@ class Grid(object):
         # Convert strings to integers
         if map_to_int:
             x = sorted(list(set(shape[attribute])), key=str.lower)
-            moby_dict = dict(zip(x, list(range(1,len(x)+1))))
+            moby_dict = dict(zip(x, list(range(1, len(x) + 1))))
             print(moby_dict)
             if save_map_to_text != None:
-                pd.DataFrame(list(moby_dict.items() )).to_csv(save_map_to_text)
+                pd.DataFrame(list(moby_dict.items())).to_csv(save_map_to_text)
             shape[attribute] = [moby_dict[v] for v in shape[attribute]]
 
         # With z_dim, a 3D grid can be formed where attributes are written to layers between z_min and Z_max
@@ -436,7 +445,6 @@ class Grid(object):
             to_burn = ((geom, value)
                        for geom, value in zip(shape.geometry, shape[attribute]))
 
-
             data = features.rasterize(
                 shapes=to_burn,
                 out_shape=self.shape2,
@@ -444,23 +452,22 @@ class Grid(object):
                 fill=fill_value,
                 all_touched=all_touched,
                 **kwargs)
-    
+
         if (map_to_int and return_map):
             return data, moby_dict
         else:
             return data
 
-    def read_grid(self, 
-                f_name,
-                xyz=('x', 'y', 'z'),
-                interpol='linear',
-                crs_src=None,
-                crs=None,
-                only_frame=True,
-                deep_copy=False,
-                set_center=False, 
-                **kwargs):
-
+    def read_grid(self,
+                  f_name,
+                  xyz=('x', 'y', 'z'),
+                  interpol='linear',
+                  crs_src=None,
+                  crs=None,
+                  only_frame=True,
+                  deep_copy=False,
+                  set_center=False,
+                  **kwargs):
         '''Read irregular (or regular) grid. Resampling and interpolating. 
 
         Keyword arguments:
@@ -471,10 +478,10 @@ class Grid(object):
 
         Returns numpy array'''
 
-        if crs_src == None:
+        if crs_src is None:
             crs_src = self.crs_src
 
-        if crs == None:
+        if crs is None:
             crs = self.crs
 
         if isinstance(f_name, str):
@@ -488,7 +495,7 @@ class Grid(object):
         if set_center:
             x = self._set_meridian(x)
 
-        xx, yy = np.meshgrid(x, y) #x, y
+        xx, yy = np.meshgrid(x, y)  # x, y
         xv, yv = proj.transform(proj.Proj(crs_src),
                                 proj.Proj(crs), xx, yy)
 
@@ -512,10 +519,10 @@ class Grid(object):
             zi = zi[is_in]
 
         return interpolate.griddata((xi, yi),
-                                    zi, 
-                                    (self.ds.coords['XV'], 
-                                    self.ds.coords['YV']), 
-                                    method=interpol, 
+                                    zi,
+                                    (self.ds.coords['XV'],
+                                     self.ds.coords['YV']),
+                                    method=interpol,
                                     **kwargs)
 
     def read_ascii(self,
@@ -524,12 +531,12 @@ class Grid(object):
                    y_col=1,
                    data_col=2,
                    interpol='linear',
-                   no_data = None,
+                   no_data=None,
                    only_frame=True,
                    crs_src=None,
                    crs=None,
                    coord_factor=1,
-                   skiprows = 0,
+                   skiprows=0,
                    **kwargs):
         '''Read ascii table to grid
 
@@ -542,16 +549,15 @@ class Grid(object):
         data_col -- index for column with data values
 
         '''
-        if crs == None:
+        if crs is None:
             crs = self.crs
-        if crs_src == None:
+        if crs_src is None:
             crs_src = self.crs_src
 
-        table = np.loadtxt(f_name, skiprows= skiprows, **kwargs)  # Add kwargs
+        table = np.loadtxt(f_name, skiprows=skiprows, **kwargs)  # Add kwargs
 
         if self.verbose:
             print(table[:5, :])
-
 
         table[:, x_col] *= coord_factor
         table[:, y_col] *= coord_factor
@@ -562,8 +568,7 @@ class Grid(object):
         if only_frame:
             is_in = self._check_if_in(xx, yy)
         else:
-            is_in = (xx,yy)
-
+            is_in = (xx, yy)
 
         return interpolate.griddata((xx[is_in], yy[is_in]),
                                     table[:, data_col][is_in],
@@ -582,7 +587,7 @@ class Grid(object):
                     num_threads=4,
                     no_data=None,
                     rgb_convert=True,
-                    bit_norm=255, 
+                    bit_norm=255,
                     **kwargs):
         '''Imports raster in geotiff format to grid. 
 
@@ -613,12 +618,12 @@ class Grid(object):
 
         in_raster = rasterio.open(f_name)
 
-        if src_crs == None:
+        if src_crs is None:
             src_crs = in_raster.crs
             if self.verbose:
                 print(src_crs)
 
-        if resampling == None:
+        if resampling is None:
             resampling = Resampling.nearest
 
         if self.verbose:
@@ -629,12 +634,12 @@ class Grid(object):
         if sub_sampling in (None, 0, 1):
             sub_sampling = 1
 
-
         raster_shape = (in_raster.count, in_raster.height //
                         sub_sampling, in_raster.width // sub_sampling)
-        source = in_raster.read(out_shape=raster_shape) #window=Window.from_slices(sub_window)
+        # window=Window.from_slices(sub_window)
+        source = in_raster.read(out_shape=raster_shape)
 
-        if sub_window == None:
+        if sub_window is None:
             pass
         else:
             print('Window not implimented yet.')
@@ -670,6 +675,7 @@ class Grid(object):
 
 
 # Exports
+
     def grid_to_grd(self, data, save_name='grid.nc'):
         '''Save data array as netCDF
 
@@ -682,18 +688,16 @@ class Grid(object):
         save_grid = data.to_netcdf(save_name)
         return save_grid
 
-
     def grid_to_raster(self, data,
-                       save_name='raster_export.tif', 
-                       raster_dtype = np.float64,
-                       raster_factor = 1):
+                       save_name='raster_export.tif',
+                       raster_dtype=np.float64,
+                       raster_factor=1):
         '''Save as geoTIFF
 
         Keyword arguments: Save to file name
 
         '''
         data = self._user_to_array(data)
-
 
         # If 2D array, define 3rd dimention as 1
         if data.ndim == 2:
@@ -704,13 +708,13 @@ class Grid(object):
         #data = reshape_as_raster(data)
 
         with rasterio.open(save_name, 'w', driver='GTiff',
-                                   height=data.shape[0], width=data.shape[1],
-                                   count=n_bands, dtype=raster_dtype,
-                                   crs=self.crs,
-                                   transform=self.transform) as dst:
+                           height=data.shape[0], width=data.shape[1],
+                           count=n_bands, dtype=raster_dtype,
+                           crs=self.crs,
+                           transform=self.transform) as dst:
 
             for k in range(n_bands):
-                dst.write(data[:,:,k]*raster_factor, indexes=k+1)
+                dst.write(data[:, :, k] * raster_factor, indexes=k + 1)
 
         return os.path.getsize(save_name)
 
@@ -722,18 +726,18 @@ class Grid(object):
     #                      proj_crs=None,
     #                      id_attribute=1):
     #     '''
-    #     Save outer frame as polygon. 
+    #     Save outer frame as polygon.
     #     '''
 
     #     from shapely.geometry import Polygon
 
-    #     if proj_crs == None:
+    #     if proj_crs is None:
     #         proj_crs = 3031
 
-    #     if frame_crs == None:
+    #     if frame_crs is None:
     #         frame_crs = 4326
 
-    #     if coordinates == None:
+    #     if coordinates is None:
     #         coordinates = [(self.left, self.up),
     #                        (self.right, self.upp),
     #                        (self.right, self.down),
@@ -749,19 +753,19 @@ class Grid(object):
 
     # def frame_to_point():
     #     '''
-    #     Save points in center of each cell. 
+    #     Save points in center of each cell.
 
     #     '''
     #     from shapely.geometry import Point
 
     #     return None
 
-    def grid_to_ascii(self, 
-                    data, 
-                    asc_file_name = 'corners.txt',
-                    center = True,
-                    fmt = '%6.2f', 
-                    no_data = -9999):
+    def grid_to_ascii(self,
+                      data,
+                      asc_file_name='corners.txt',
+                      center=True,
+                      fmt='%6.2f',
+                      no_data=-9999):
         '''Save to asc format
 
         Keyword arguments:
@@ -773,38 +777,35 @@ class Grid(object):
 
         data = self._user_to_array(data)
 
-        header_labels = ['NCOLS', 'NROWS', 'XLLCORNER', 'YLLCORNER', 'CELLSIZE', 'NODATA_VALUE']
-        header_values = [self.nx, self.ny, self.left, self.down, self.res[0], no_data]
+        header_labels = ['NCOLS', 'NROWS', 'XLLCORNER',
+                         'YLLCORNER', 'CELLSIZE', 'NODATA_VALUE']
+        header_values = [self.nx, self.ny, self.left,
+                         self.down, self.res[0], no_data]
 
         if center:
             header_labels[2:4] = ['XLLCENTER', 'YLLCENTER']
-            header_values[2:4] = header_values[2:3] + [self.res[0]/2, self.res[1]/2]    
- 
-        # The wunder of Python: 
-        header = ''.join([''.join(h) for h in zip(header_labels, [' ']*6, [str(val) for val in header_values], ['\n']*6)])
-        
-        np.savetxt(asc_file_name, data, 
-           delimiter=' ', 
-           header = header, 
-           newline='', 
-           comments = '', 
-           fmt=fmt)
+            header_values[2:4] = header_values[2:3] + \
+                [self.res[0] / 2, self.res[1] / 2]
+
+        # The wunder of Python:
+        header = ''.join([''.join(h) for h in zip(
+            header_labels, [' '] * 6, [str(val) for val in header_values], ['\n'] * 6)])
+
+        np.savetxt(asc_file_name, data,
+                   delimiter=' ',
+                   header=header,
+                   newline='',
+                   comments='',
+                   fmt=fmt)
 
         return os.path.getsize(asc_file_name)
 
-
-
-    def bins_to_grid(self, 
-        data,
-        function = 'mean'):
+    def bins_to_grid(self,
+                     data,
+                     function='mean'):
         '''
         Function to eread data in to bins
         '''
-
-
-
-
-
 
         return None
 
@@ -815,19 +816,18 @@ class Grid(object):
         '''
         return 0
 
-    def oblique_view(self, data, 
-        save_name=None, 
-        show_oblique=False, 
-        azimuth=0, 
-        elevation=7500, 
-        distance=1100, 
-        roll=90, 
-        bgcolor = (1., 1., 1.),
-        warp_scale=0.015, 
-        vmin = None, 
-        vmax = None, 
-        cmap = 'terrain'):
-
+    def oblique_view(self, data,
+                     save_name=None,
+                     show_oblique=False,
+                     azimuth=0,
+                     elevation=7500,
+                     distance=1100,
+                     roll=90,
+                     bgcolor=(1., 1., 1.),
+                     warp_scale=0.015,
+                     vmin=None,
+                     vmax=None,
+                     cmap='terrain'):
         '''3D oblique view
 
         Keyword arguments:
@@ -844,12 +844,12 @@ class Grid(object):
 
         # Import mlab
         from mayavi import mlab
-        
+
         data = self._user_to_array(data)
 
-        if vmin == None:
+        if vmin is None:
             vmin = np.nanpercentile(data, 0.1)
-        if vmax == None:
+        if vmax is None:
             vmax = np.nanpercentile(data, 99.9)
 
         if show_oblique:
@@ -857,12 +857,14 @@ class Grid(object):
         else:
             mlab.options.offscreen = True
 
-        mlab.figure(size=(1000, 1000), bgcolor= bgcolor)
+        mlab.figure(size=(1000, 1000), bgcolor=bgcolor)
         mlab.clf()
 
-        mlab.surf(data, warp_scale=warp_scale, colormap=cmap, vmin=vmin, vmax=vmax)
+        mlab.surf(data, warp_scale=warp_scale,
+                  colormap=cmap, vmin=vmin, vmax=vmax)
 
-        mlab.view(azimuth=azimuth, elevation=elevation, distance=distance, roll=roll)
+        mlab.view(azimuth=azimuth, elevation=elevation,
+                  distance=distance, roll=roll)
 
         if save_name != None:
             mlab.savefig(save_name, size=(1000, 1000))
@@ -872,17 +874,16 @@ class Grid(object):
 
         mlab.close(all=True)
 
-        # Return obj 
+        # Return obj
         return None
 
-
     def volume_slice(self, data,
-            save_name=None,  
-            cmap = 'viridis',
-            vmin = None, 
-            vmax = None, 
-            show_slice = False, 
-            bgcolor = (1., 1., 1.)):
+                     save_name=None,
+                     cmap='viridis',
+                     vmin=None,
+                     vmax=None,
+                     show_slice=False,
+                     bgcolor=(1., 1., 1.)):
         '''Open Mayavi scene
 
         New function
@@ -891,52 +892,50 @@ class Grid(object):
         # Import mlab
         from mayavi import mlab
 
-        #try:
+        # try:
         #    engine = mayavi.engine
-        #except NameError:
+        # except NameError:
         #    from mayavi.api import Engine
         #engine = Engine()
-        #engine.start()
+        # engine.start()
 
-        if vmin == None:
+        if vmin is None:
             vmin = np.nanpercentile(data, 0.1)
-        if vmax == None:
+        if vmax is None:
             vmax = np.nanpercentile(data, 99.9)
 
-        #if len(engine.scenes) == 0:
+        # if len(engine.scenes) == 0:
         #    engine.new_scene()
-        
-        mlab.figure(size=(1000, 1000), bgcolor= bgcolor)
+
+        mlab.figure(size=(1000, 1000), bgcolor=bgcolor)
         mlab.clf()
 
         mlab.volume_slice(data.values, plane_orientation='x_axes')
 
-        mlab.view(azimuth=azimuth, elevation=elevation, distance=distance, roll=roll)
-    
+        mlab.view(azimuth=azimuth, elevation=elevation,
+                  distance=distance, roll=roll)
+
         #module_manager = engine.scenes[0].children[0].children[0]
 
         #module_manager.scalar_lut_manager.lut_mode = cmap
         #scene = engine.scenes[0]
-        #scene.scene.x_minus_view()
-        
+        # scene.scene.x_minus_view()
+
         if save_name != None:
             mlab.savefig(save_name, size=(1000, 1000))
 
         if show_slice:
             mlab.show()
 
-        return None 
-
-
-
+        return None
 
     def map_grid(self, im_data,
                  vmin=None,
                  vmax=None,
                  cmap='gray',
                  cbar=False,
-                 cbar_label = '',
-                 extent= None,
+                 cbar_label='',
+                 extent=None,
                  line_c='gray',
                  line_grid_c='gray',
                  line_w=0.9,
@@ -947,15 +946,13 @@ class Grid(object):
                  no_land_fill=np.nan,
                  title=None,
                  save_name=None,
-                 show_map=True,
-                 ax = None,
-                 map_res = 'i',
+                 show=True,
+                 map_res='i',
                  draw_coast=True,
                  draw_grid=True,
                  par=None,
-                 mer=None, 
+                 mer=None,
                  *args, **kwargs):
-
         '''Make map view for print or display. 
 
         Keyword arguments:
@@ -983,7 +980,7 @@ class Grid(object):
         draw_grid -- Draw parallells and meridieans
         par -- List of Parallels
         mer -- List of Meridians        
-    
+
         This function might eventually be amended to use cartopy or GMT. 
         '''
 
@@ -996,20 +993,20 @@ class Grid(object):
 
         im_data = self._user_to_array(im_data)
 
-        if figsize == None:
+        if figsize is None:
             figsize = (12, 12 * self.nx / self.ny)
 
-        if par == None:
+        if par is None:
             par = np.arange(-90, 90, 10)
 
-        if mer == None:
+        if mer is None:
             mer = np.arange(-180, 180, 45)
 
-        #New pyproj version to be implimented:
-        #pyproj.CRS 
+        # New pyproj version to be implimented:
+        # pyproj.CRS
         #basemap_epsg = to_epsg(self.crs, min_confidence=90)
 
-        basemap_epsg = int(re.findall("\d+.\d+", self.crs)[0] )
+        basemap_epsg = int(re.findall("\d+.\d+", self.crs)[0])
 
         m = Basemap(llcrnrlon=self.lon[-1, 0],
                     llcrnrlat=self.lat[-1, 0],
@@ -1018,18 +1015,18 @@ class Grid(object):
                     resolution=map_res,
                     epsg=basemap_epsg, **kwargs)
 
-        if extent == None:
+        if extent is None:
             extent = [self.left, self.right, self.down, self.up]
 
-
-        fig = plt.figure(figsize=figsize)
-        ax = ax or plt.axes()
-        ax.axis('off')
+        #fig = plt.figure(figsize=figsize)
+        fig, ax = plt.subplots(figsize=figsize)
+        #ax = ax or plt.axes()
+        # ax.axis('off')
 
         if im_data is not None:
-            if vmin == None:
+            if vmin is None:
                 vmin = np.nanpercentile(im_data, 0.1)
-            if vmax == None:
+            if vmax is None:
                 vmax = np.nanpercentile(im_data, 99.9)
 
             if circ_map:
@@ -1047,7 +1044,7 @@ class Grid(object):
 
             if cbar:
                 cbar = fig.colorbar(im, orientation='vertical',
-                             fraction=0.046, pad=0.01)
+                                    fraction=0.046, pad=0.01)
                 cbar.set_label(cbar_label)
 
         if land_only:
@@ -1071,7 +1068,7 @@ class Grid(object):
                         bbox_inches='tight', pad_inches=0)
             print('Saved to:', save_name)
 
-        if show_map:
+        if show:
             plt.show()
 
         return m
@@ -1090,7 +1087,7 @@ class Grid(object):
 
         Keyword arguments:
         interp_method -- imshow interpolation methods
-        
+
         Rather undeveloped function. 
         """
 
@@ -1151,5 +1148,90 @@ class Grid(object):
                          data),
                         kdims=kdims,
                         vdims=vdims)
-        return ds.to(hv.Image, flat).redim(slider).options(colorbar=True,
-                                                           invert_yaxis=invert_yaxis).hist()
+        return ds.to(hv.Image, flat).redim(slider).options(colorbar=True, invert_yaxis=invert_yaxis).hist()
+
+    def layer_cake(self,
+                   data,
+                   figsize=None,
+                   save_name=None,
+                   show_map=True,
+                   scale_x=1,
+                   scale_y=1,
+                   scale_z=0.5,
+                   cmap='viridis',
+                   layers=None,
+                   dims=['X', 'Y', 'Z'],
+                   ax_grid=False,
+                   xlabel='$X$ (km)',
+                   ylabel='$Y$ (km)',
+                   zlabel='$Z$ (km)'):
+        '''Method to display 3D data by using only matplotlib
+        data : data to display
+        save_name : Name to save file to
+        make_wireframe : Display wireframe
+
+
+
+        '''
+
+        from mpl_toolkits.mplot3d import Axes3D
+
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(projection='3d')
+
+        data = self._user_to_array(data)
+
+        if figsize is None:
+            figsize = (12, 12 * self.nx / self.ny)
+
+        if layers is None:
+            layers = self.depths
+
+        # Make the 3D grid
+        X, Y, Z = np.meshgrid(self.ds[dims[0]],
+                              self.ds[dims[1]],
+                              self.ds[dims[2]])
+
+        # calculate a colour for points(x,y,z) Absolute speed - model ak135
+        #zs = np.ravel(ant.ds['AN_Sm']-ant.ds['AK135_SV'])
+
+        ###ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([scale_x, scale_y, scale_z, 1]))
+
+        #cube = ax.scatter(X/km, Y/km, Z/km, zdir='z', c=zs, s = 0.8, cmap='viridis', alpha=0.8)
+        #cbar = fig.colorbar(cube, shrink=0.6, aspect=5)
+
+        for z in ant.ds['Zm']:
+            z_layer = int(z) * np.ones(ant.nn)
+            zs = np.ravel(ant.ds['AN_Sm'].sel(Zm=int(z)) -
+                          ant.ds['AK135_SV'].sel(Zm=int(z)))
+
+            if make_wireframe:
+                ax.plot_wireframe(
+                    ant.ds['XV'] / km, ant.ds['YV'] / km, z_layer / km, color='k', alpha=0.07, lw=0.4)
+
+            cube = ax.scatter(self.ds['XV'], self.ds['YV'], z_layer / km, zdir='z', c=zs, s=1.7,
+                              cmap=cmap, alpha=1)
+
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
+        ax.set_zlabel(zlabel, fontsize=12)
+        ax.yaxis._axinfo['label']['space_factor'] = 3.0
+
+        ax.grid(ax_grid)
+
+        #ax.set_xlim3d(ant.ds['X'][0]/km, ant.ds['X'][-1]/km)
+        #ax.set_ylim3d(ant.ds['Y'][-1]/km, ant.ds['Y'][0]/km)
+        #ax.set_zlim3d(ant.ds['Zm'][-1]/km, ant.ds['Zm'][0]/km)
+
+        # ax.invert_zaxis()
+        fig.tight_layout(pad=0)
+        if save:
+            fig.savefig(save_name, transparent=True,
+                        bbox_inches='tight', pad_inches=0)
+
+        if show:
+            plt.show()
+        return None
+
+    def slice_3D():
+        return None
