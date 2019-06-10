@@ -1,12 +1,13 @@
 
-# Features for special use in studies. 
+# Features for special use in studies.
+
 
 def read_model(self,
                shape_file_name,
                kernel_size=100,
                std=5000,
-               p_att = 'P',
-               w_att = 'W',
+               p_att='P',
+               w_att='W',
                norm=True):
     '''Read and colvolve line vectors. 
 
@@ -32,20 +33,24 @@ def read_model(self,
                 out_shape=self.shape2,
                 transform=self.transform) * 2 + geom['properties'][p_att] / 2
 
-            sigma_0 = (std + std / geom['properties'][w_att]) / (2 * self.res[0])
-            sigma_1 = (std + std / geom['properties'][w_att]) / (2 * self.res[1])
+            sigma_0 = (std + std / geom['properties']
+                       [w_att]) / (2 * self.res[0])
+            sigma_1 = (std + std / geom['properties']
+                       [w_att]) / (2 * self.res[1])
 
-            convolved[:, :, i] = gaussian_filter(geom_np[:, :, i], (sigma_0, sigma_1))
+            convolved[:, :, i] = gaussian_filter(
+                geom_np[:, :, i], (sigma_0, sigma_1))
     model = np.sum(convolved, axis=2)
     if norm:
-        model[np.isnan(model)] = 0 
+        model[np.isnan(model)] = 0
         model = (model - np.min(model)) / np.ptp(model)
     return model
+
 
 def export_morse_png(self,
                      data,
                      png_name,
-                     png_format = 'LA',
+                     png_format='LA',
                      v_min=0.,
                      v_max=14.0,
                      png_nx=3600,
@@ -56,7 +61,7 @@ def export_morse_png(self,
                      interpol_method='nearest',
                      confine_data='input',
                      confine_mask=None,
-                     mask_to_value = None,
+                     mask_to_value=None,
                      clip=False):
     '''Save 2D array as png.file formatted for Morse et al vizualisation software
 
@@ -91,8 +96,8 @@ def export_morse_png(self,
     See Morse et al 2019 (in prep)
 
     '''
-    #Import PyPNG
-    #https://pythonhosted.org/pypng/index.html
+    # Import PyPNG
+    # https://pythonhosted.org/pypng/index.html
     import png
     import numpy as np
 
@@ -110,7 +115,7 @@ def export_morse_png(self,
             print('Bit depth set to 8')
 
     # If the grid is already in the right extent, resolution and
-    # projection, there is no need to do it again, and set_geometry can be False 
+    # projection, there is no need to do it again, and set_geometry can be False
     if set_geometry:
         # Reproject grid to Morse image, usually 4326
         xp, yp = proj.transform(proj.Proj(init='epsg:%s' % self.crs),
@@ -129,60 +134,60 @@ def export_morse_png(self,
         # yyy as array index from top to bottom, hence -1
         xxx, yyy = np.meshgrid(range(0, png_nx), range(png_ny, 0, -1))
         data = interpolate.griddata((xi, yi), vi, (xxx, yyy),
-                                 method=interpol_method,
-                                 fill_value=np.nan)
-   
+                                    method=interpol_method,
+                                    fill_value=np.nan)
+
     # If nearest, interpolate extrapolate voronoi type fields, to remove them, we need to take a detour
-    # and make a mask from a different interpolation technique, e.g. linear. 
+    # and make a mask from a different interpolation technique, e.g. linear.
     if confine_data == 'estimate':
         vi = np.reshape(data, (data.size))
         xi = np.reshape(self.xv, (data.size))
         yi = np.reshape(self.yv, (data.size))
         xxx, yyy = np.meshgrid(range(0, png_nx), range(png_ny, 0, -1))
         alpha = np.isfinite(interpolate.griddata((xi, yi), vi, (xxx, yyy),
-                                                             method='linear', fill_value=np.nan))
+                                                 method='linear', fill_value=np.nan))
     elif confine_data == 'mask':
         alpha = confine_mask
     elif confine_data == 'input':
         alpha = np.isfinite(data)
     else:
         alpha = np.ones_like(data)
-  
-    #Set masked areas to zero
+
+    # Set masked areas to zero
     if mask_to_value != None:
         data[~alpha] = mask_to_value
-       
+
     # alpha is set by alpha array, not nan
     d_num = np.nan_to_num(data)
-    
+
     # alpha from boolean to integer channel
     alpha = alpha * norm
-    
+
     # np.clip values outside interval are clipped:
     if clip:
         n_png = norm * (np.clip(d_num, v_min, v_max) - v_min) / (v_max - v_min)
     else:
         n_png = norm * (d_num - v_min) / (v_max - v_min)
-        
+
     if png_format == 'L':
         png_write = n_png
     elif png_format == 'LA':
         png_write = np.dstack((n_png, alpha))
-    elif png_format == 'RGB': 
+    elif png_format == 'RGB':
         png_write = np.dstack((n_png, n_png, n_png))
-    elif png_format == 'RGBA': 
+    elif png_format == 'RGBA':
         png_write = np.dstack((n_png, n_png, n_png, alpha))
     else:
         print('Not supported format, use L, LA, RGB or RGBA.')
-            
+
     # Save png file
     png.from_array(png_write.astype(d_type), png_format).save(png_name)
 
-    #Read back:
+    # Read back:
     read_file = png.Reader(png_name).asDirect()
     report += "\n".join("{}: {}".format(k, v) for k, v in read_file[3].items())
     read_file = np.array(list(read_file[2]))
-    
+
     # Return string with report of convention.
     report += '\n%s \nmin v: %s max v: %s bit depth: %s\n' % (
         png_name, v_min, v_max, bit_depth)
@@ -190,13 +195,13 @@ def export_morse_png(self,
         np.shape(png_write), interpol_method)
     report += 'data \t  norm \t  to png \t png \n'
     report += '%.2f \t  %.2f \t %.2f \t  %s \n' % (np.nanmin(data),
-                                                 np.nanmin(n_png)/norm,
-                                                 np.nanmin(n_png),
-                                                 np.nanmin(read_file))
+                                                   np.nanmin(n_png) / norm,
+                                                   np.nanmin(n_png),
+                                                   np.nanmin(read_file))
     report += '%.2f \t  %.2f \t %.2f \t  %s \n \n' % (np.nanmax(data),
-                                                 np.nanmax(n_png)/norm,
-                                                 np.nanmax(n_png),
-                                                 np.nanmax(read_file))
+                                                      np.nanmax(n_png) / norm,
+                                                      np.nanmax(n_png),
+                                                      np.nanmax(read_file))
 
     read_file = None
     return report
