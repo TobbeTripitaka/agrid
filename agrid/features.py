@@ -1,10 +1,12 @@
 
 # Features for special use in studies.
+import numpy as np
+import rasterio
 
 
 def read_model(self,
                shape_file_name,
-               kernel_size=100,
+               kernel_size=None,
                std=5000,
                p_att='P',
                w_att='W',
@@ -25,8 +27,11 @@ def read_model(self,
     import fiona  # Replace with geopandas, update model!
     from scipy.ndimage.filters import gaussian_filter
 
+    if kernel_size is None:
+        kermel_size = (self.nx // 2, self.ny // 2)
+
     with fiona.open(shape_file_name, 'r') as src:
-        blurred = geom_np = np.zeros(self.shape2 + (len(src),))
+        convolved = geom_np = np.zeros(self.shape2 + (len(src),))
         for i, geom in enumerate(src):
             geom_np[:, :, i] = rasterio.features.rasterize(
                 [geom['geometry']],
@@ -64,6 +69,7 @@ def export_morse_png(self,
                      mask_to_value=None,
                      clip=False):
     '''Save 2D array as png.file formatted for Morse et al vizualisation software
+    Works well with global rasters for e.g. Gplates
 
     Keyword arguments:
     data   --  2D array as string (label) or dataframe (XXX read also numpy XXX)
@@ -99,7 +105,6 @@ def export_morse_png(self,
     # Import PyPNG
     # https://pythonhosted.org/pypng/index.html
     import png
-    import numpy as np
 
     # String is taken as label
     data = self._user_to_array(data)
