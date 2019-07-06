@@ -40,9 +40,12 @@ from mpl_toolkits.basemap import Basemap
 
 from scipy import interpolate
 import scipy.ndimage
+import imageio
 
 import pandas as pd
 import geopandas as gpd
+import fiona
+
 
 from affine import Affine
 import rasterio
@@ -223,6 +226,16 @@ class Grid(object):
         else:
             im_data = im_data.values  # if data frame
         return im_data
+
+    def _set_v_range(vmin, vmax, im_data,
+                     first_pile=0.1,
+                     last_pile=99.9):
+
+        if vmin is None:
+            vmin = np.nanpercentile(im_data, first_pile)
+        if vmax is None:
+            vmax = np.nanpercentile(im_data, last_pile)
+        return vmin, vmax
 
     def meta_to_dict(self,
                      f_name='',
@@ -818,13 +831,15 @@ class Grid(object):
 
     def oblique_view(self, data,
                      save_name=None,
-                     show_oblique=False,
+                     show=False,
                      azimuth=0,
-                     elevation=7500,
+                     elevation=45,
                      distance=1100,
                      roll=90,
+                     figsize=(1800, 1800),
                      bgcolor=(1., 1., 1.),
                      warp_scale=0.015,
+                     lut=None,
                      vmin=None,
                      vmax=None,
                      cmap='terrain'):
@@ -838,12 +853,15 @@ class Grid(object):
         bgcolor -- Tuple of lenght 3, values from 0 to 1 RGB
         warp_scale -- Enhance z, lower value increase the distortion
         vmin and vmax -- Set color range
+        lut 
+        cmap
 
         Function exemplifies the use of mayavi and VTK for visualizing multidimensional data
         '''
 
         # Import mlab
         from mayavi import mlab
+        # mlab.clf()
 
         data = self._user_to_array(data)
 
@@ -852,24 +870,36 @@ class Grid(object):
         if vmax is None:
             vmax = np.nanpercentile(data, 99.9)
 
-        if show_oblique:
+        if show:
             mlab.options.offscreen = False
         else:
             mlab.options.offscreen = True
 
-        mlab.figure(size=(1000, 1000), bgcolor=bgcolor)
-        mlab.clf()
+        if cmap is None:
+            set_lut = True
+            cmap = 'viridis'
+        else:
+            set_lut = False
 
-        mlab.surf(data, warp_scale=warp_scale,
-                  colormap=cmap, vmin=vmin, vmax=vmax)
+        fig = mlab.figure(size=figsize, bgcolor=bgcolor)
+
+        surf = mlab.surf(data, warp_scale=warp_scale,
+                         colormap=cmap, vmin=vmin, vmax=vmax, figure=fig)
 
         mlab.view(azimuth=azimuth, elevation=elevation,
                   distance=distance, roll=roll)
 
-        if save_name != None:
-            mlab.savefig(save_name, size=(1000, 1000))
+        if set_lut:
+            surf.module_manager.scalar_lut_manager.lut.table = lut
+            mlab.draw()
 
-        if show_oblique:
+        if save_name != None:
+            save_array = mlab.screenshot(
+                figure=fig, mode='rgba', antialiased=True)*255
+            imageio.imwrite(save_name, save_array.astype(np.uint8))
+            #mlab.savefig(save_name, size=figsize)
+
+        if show:
             mlab.show()
 
         mlab.close(all=True)
@@ -929,7 +959,14 @@ class Grid(object):
 
         return None
 
-    def map_grid(self, im_data,
+    def map_grid(self,
+                 im_data,
+                 vectors=[],
+                 v_col=[],
+                 v_alpha=1,
+                 v_lw=1,
+                 v_x_offset=0,
+                 v_y_offset=0,
                  vmin=None,
                  vmax=None,
                  cmap='gray',
@@ -953,7 +990,9 @@ class Grid(object):
                  par=None,
                  mer=None,
                  *args, **kwargs):
-        '''Make map view for print or display. 
+        '''Make map view for print or display.
+
+
 
         Keyword arguments:
 
@@ -1004,7 +1043,7 @@ class Grid(object):
 
         # New pyproj version to be implimented:
         # pyproj.CRS
-        #basemap_epsg = to_epsg(self.crs, min_confidence=90)
+        # basemap_epsg = to_epsg(self.crs, min_confidence=90)
 
         basemap_epsg = int(re.findall("\d+.\d+", self.crs)[0])
 
@@ -1018,12 +1057,14 @@ class Grid(object):
         if extent is None:
             extent = [self.left, self.right, self.down, self.up]
 
-        #fig = plt.figure(figsize=figsize)
+        # fig = plt.figure(figsize=figsize)
         fig, ax = plt.subplots(figsize=figsize)
-        #ax = ax or plt.axes()
-        # ax.axis('off')
+        # ax = ax or plt.axes()
+        #  ax.axis('off')
 
         if im_data is not None:
+            # vmin, vmax = self._set_v_range(vmin, vmax, im_data)
+
             if vmin is None:
                 vmin = np.nanpercentile(im_data, 0.1)
             if vmax is None:
@@ -1058,6 +1099,22 @@ class Grid(object):
             m.drawparallels(par, color=line_grid_c, alpha=0.9, zorder=15)
             m.drawmeridians(mer, color=line_grid_c,
                             alpha=0.9, latmax=88, zorder=15)
+
+        for j, vector in enumerate(vectors):
+            with fiona.open(str(vector), 'r') as src:
+                for i, geom in enumerate(src):
+                    x = [i[0] for i in geom['geometry']['coordinates']]
+                    y = [i[1] for i in geom['geometry']['coordinates']]
+                    # print(geom)
+
+                # x, y = proj.transform(proj.Proj(init='epsg:%s'%env['shape_proj']),
+                #                    proj.Proj(init='epsg:%s,
+                #                    x, y)
+
+                    x = [v_x_offset + _ for _ in x]
+                    y = [v_y_offset + _ for _ in y]
+                    # solid_capstyle='round'
+                    m.plot(x, y, c=v_col[j], alpha=v_alpha, lw=v_lw, zorder=20)
 
         if title != None:
             fig.suptitle(title)
@@ -1150,36 +1207,51 @@ class Grid(object):
                         vdims=vdims)
         return ds.to(hv.Image, flat).redim(slider).options(colorbar=True, invert_yaxis=invert_yaxis).hist()
 
-    def layer_cake(self,
-                   data,
-                   figsize=None,
-                   save_name=None,
-                   show_map=True,
-                   scale_x=1,
-                   scale_y=1,
-                   scale_z=0.5,
-                   cmap='viridis',
-                   layers=None,
-                   dims=['X', 'Y', 'Z'],
-                   ax_grid=False,
-                   xlabel='$X$ (km)',
-                   ylabel='$Y$ (km)',
-                   zlabel='$Z$ (km)'):
+    def layer_cake_fix(self,
+                       data,
+                       figsize=None,
+                       save_name=None,
+                       show_map=True,
+                       make_wireframe=True,
+                       d_alpha=0.6,
+                       d_levels=100,
+                       g_alpha=0.1,
+                       g_lw=0.3,
+                       scale_x=1,
+                       scale_y=1,
+                       scale_z=0.5,
+                       vmin=None,
+                       vmax=None,
+                       cmap='viridis',
+                       cbar=True,
+                       layers=None,
+                       dims=['X', 'Y', 'Z'],
+                       reduce_dims=[5, 5, 5],
+                       wireframe=None,
+                       ax_grid=False,
+                       azim=30,
+                       elev=150,
+                       dist=10,
+                       z_lim=None,
+                       outer_frame=False,
+                       xlabel='$X$ (km)',
+                       ylabel='$Y$ (km)',
+                       zlabel='$Z$ (km)'):
         '''Method to display 3D data by using only matplotlib
         data : data to display
         save_name : Name to save file to
         make_wireframe : Display wireframe
-
-
+        data : data to plot, 2D or 3D
+        figsize ; figuee outout size in cm
+        save:name : filename as string to save file, don't save if None
 
         '''
 
         from mpl_toolkits.mplot3d import Axes3D
+        data = self._user_to_array(data)
 
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(projection='3d')
-
-        data = self._user_to_array(data)
 
         if figsize is None:
             figsize = (12, 12 * self.nx / self.ny)
@@ -1187,49 +1259,65 @@ class Grid(object):
         if layers is None:
             layers = self.depths
 
-        # Make the 3D grid
-        X, Y, Z = np.meshgrid(self.ds[dims[0]],
-                              self.ds[dims[1]],
-                              self.ds[dims[2]])
+        #vmin, vmax = self._set_v_range(vmin, vmax, data)
 
-        # calculate a colour for points(x,y,z) Absolute speed - model ak135
-        #zs = np.ravel(ant.ds['AN_Sm']-ant.ds['AK135_SV'])
+        # Add option ti normalise each layer or all cake
+        if vmin is None:
+            vmin = np.nanpercentile(data, 0.1)
+        if vmax is None:
+            vmax = np.nanpercentile(data, 99.9)
 
-        ###ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([scale_x, scale_y, scale_z, 1]))
-
-        #cube = ax.scatter(X/km, Y/km, Z/km, zdir='z', c=zs, s = 0.8, cmap='viridis', alpha=0.8)
-        #cbar = fig.colorbar(cube, shrink=0.6, aspect=5)
-
-        for z in ant.ds['Zm']:
-            z_layer = int(z) * np.ones(ant.nn)
-            zs = np.ravel(ant.ds['AN_Sm'].sel(Zm=int(z)) -
-                          ant.ds['AK135_SV'].sel(Zm=int(z)))
+        for i, z in enumerate(layers):
+            if data.ndim == 2:
+                layer_data = data
+            elif data.ndim == 3:
+                layer_data = data[:, :, i]
+            else:
+                print('Can not display data in', data.ndim, 'dimensions.')
 
             if make_wireframe:
+                z_layer = z * np.ones(self.nn)
                 ax.plot_wireframe(
-                    ant.ds['XV'] / km, ant.ds['YV'] / km, z_layer / km, color='k', alpha=0.07, lw=0.4)
+                    wireframe[0], wireframe[1], z_layer,
+                    color='k',
+                    alpha=g_alpha,
+                    lw=g_lw)
 
-            cube = ax.scatter(self.ds['XV'], self.ds['YV'], z_layer / km, zdir='z', c=zs, s=1.7,
-                              cmap=cmap, alpha=1)
+            cube = ax.contourf(self.ds.XV.values, self.ds.YV.values,
+                               layer_data, d_levels,
+                               zdir='z',
+                               vmin=vmin,
+                               vmax=vmax,
+                               offset=z,
+                               alpha=d_alpha,
+                               cmap=cmap)
+
+        if cbar:
+            cbar = fig.colorbar(cube, shrink=0.6, aspect=5)
 
         ax.set_xlabel(xlabel, fontsize=12)
         ax.set_ylabel(ylabel, fontsize=12)
         ax.set_zlabel(zlabel, fontsize=12)
         ax.yaxis._axinfo['label']['space_factor'] = 3.0
 
-        ax.grid(ax_grid)
+        plt.rcParams['axes3d.grid'] = ax_grid
+        # print(plt.rcParams)
 
-        #ax.set_xlim3d(ant.ds['X'][0]/km, ant.ds['X'][-1]/km)
-        #ax.set_ylim3d(ant.ds['Y'][-1]/km, ant.ds['Y'][0]/km)
-        #ax.set_zlim3d(ant.ds['Zm'][-1]/km, ant.ds['Zm'][0]/km)
+        if z_lim is None:
+            z_lim = (np.nanmax(self.ds['Z']), np.nanmin(self.ds['Z']))
+
+        ax.set_zlim(z_lim)
+        ax.azim = azim
+        ax.elev = elev
+        ax.dist = dist
 
         # ax.invert_zaxis()
         fig.tight_layout(pad=0)
-        if save:
+        if save_name is not None:
             fig.savefig(save_name, transparent=True,
                         bbox_inches='tight', pad_inches=0)
 
-        if show:
+        if show_map:
             plt.show()
         return None
 
