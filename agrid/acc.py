@@ -3,7 +3,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.5.0'
+# version = '0.3.0'
 
 # https://doi.org/10.5281/zenodo.2553966
 #
@@ -53,6 +53,7 @@ def download(url,
              block_size=1024,
              confirm_data=True,
              make_meta=True,
+             bulk=False,
              meta_dict={},
              _return='files'):
     '''
@@ -68,6 +69,11 @@ def download(url,
 
     if data_files is None:
         data_files = [f_name]
+
+
+    if bulk:
+        # Cleaned up for lates version. 
+        pass
 
     # Check if any file is missing
     get_file = 'True'
@@ -91,7 +97,7 @@ def download(url,
                 wrote = wrote + len(data)
                 f.write(data)
         if total_size != 0 and wrote != total_size:
-            print("DOWNLOAD ERROR.")
+            raise Exception('Download error')
         meta_dict = {**meta_dict, **{
             'url': url,
             'accessed': str(datetime.datetime.now())}
