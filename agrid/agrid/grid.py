@@ -2,7 +2,7 @@
 
 # Tobias Staal 2019
 # tobias.staal@utas.edu.au
-# version = '0.1.0'
+# version = '0.3.3'
 
 # https://doi.org/10.5281/zenodo.2553966
 #
