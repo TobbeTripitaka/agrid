@@ -1,16 +1,29 @@
+#Mac junk
 .DS_Store
 .sconsign.dblite
 
+#Not needed
 data/*
 local/*
 
 .ipynb_checkpoints/
 __pycache__/
 
+# Only actual fig and tex
 fig/*
 !fig/*.tex
 !fig/*.pdf
 !fig/*.png
 
+# Tex junk
 tex/*
 !tex/*.tex
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info

@@ -19,7 +19,6 @@ The repository contains:
   - 2. Import data
   - 3. Visualize data
   - 4. Introduction to processing and modelling using grid. 
- - TikZ code for e.g. generating illustrations. 
 
 ---
 ## Instructions: 
@@ -32,6 +31,9 @@ Download module.
 Import agrid 
 
 See example in the Jupyter Notebook agrid
+
+Using pip: 
+pip install agrid
 
 ---
 

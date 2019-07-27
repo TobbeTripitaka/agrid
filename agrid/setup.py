@@ -1,14 +1,16 @@
 
+import os
 import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setuptools.setup(
     name='agrid',
-    version='0.3.0',
-    scripts=['agrid'],
+    version='0.3.3',
     author="Tobias Staal",
     author_email="tobbe@tripitaka.se",
     description="A multidimensional grid for scientific computing.",
@@ -21,16 +23,19 @@ setuptools.setup(
          "License :: OSI Approved :: MIT License",
          "Operating System :: OS Independent",
     ],
-    install_requires=[
-          'numpy',
-          'xarray',
-          'matplotlib',
-          'pyproj',
-          'scipy',
-          'fiona',
-          'geopandas',
-          'rasterio',
-          'imageio,
-          'json',
-          're',]
-    ,)
+    install_requires=required)
+
+
+
+
+
+
+#[        'numpy',
+#        'xarray',
+#        'matplotlib',
+#        'pyproj',
+#        'scipy',
+#        'fiona',
+#        'geopandas',
+#        'rasterio',
+#        'imageio', ]
