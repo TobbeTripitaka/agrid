@@ -26,5 +26,7 @@ tex/*
 dist/*
 build/*
 agrid.egg-info/*
-
+agrid/bin/*
+agrid/lib/*
+agrid/pyvenv.cfg
 
