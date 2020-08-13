@@ -23,7 +23,7 @@ tex/*
 *.pyc
 
 # Setuptools 
-agrid/dist/*
-agrid/build/lib/agrid/*
-agrid/agrid.egg-info/*
+dist/*
+build/*
+agrid.egg-info/*
 
