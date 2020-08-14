@@ -1,32 +1,11 @@
-#Mac junk
-.DS_Store
-.sconsign.dblite
+# Ignore everything:
+*
 
-#Not needed
-data/
-local/
-
-.ipynb_checkpoints/
-__pycache__/
-
-# Only actual fig and tex
-fig/*
-!fig/*.tex
-!fig/*.pdf
-!fig/*.png
-
-# Tex junk
-tex/*
-!tex/*.tex
-
-# Compiled python modules.
-*.pyc
-
-# Setuptools 
-dist/
-build/
-agrid.egg-info/
-agrid/bin/
-agrid/lib/
-agrid/pyvenv.cfg
-
+# Except (!)
+!requirements.txt
+!README.md
+!LICENSE
+!.gitignore
+!.gitattributes
+!tutorials/
+!agrid/*.py
