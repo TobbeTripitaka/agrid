@@ -15,7 +15,7 @@ requirements = [
 
 setuptools.setup(
     name='agrid', 
-    version="0.3.9.1",
+    version="0.3.9.2",
     author="Tobias Staal",
     author_email="tobbetripitaka@gmail.com",
     description='A grid for spatial multidimensional processing',

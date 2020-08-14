@@ -7,5 +7,5 @@
 !LICENSE
 !.gitignore
 !.gitattributes
-!tutorials/*
-!agrid/*py
+!tutorials/*.ipynb
+!agrid/*.py
