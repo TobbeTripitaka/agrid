@@ -21,11 +21,7 @@ The repository contains:
   - 3. Visualize data
   - 4. Introduction to processing and modelling using grid. 
 
-
-
 Software paper availible here: [JORS](https://openresearchsoftware.metajnl.com/articles/10.5334/jors.287/)
-
-
 
 ---
 ## Instructions: 
@@ -47,7 +43,7 @@ OSX users can set up an environment directely in conda.
 **Alternative 2**
 Download module and import agrid from local path
 
-See example in the Jupyter Notebook agrid
+See example in the Jupyter Notebook agrid. 
 
 ---
 
@@ -58,9 +54,7 @@ To get started:
     # The grid is already populated with default coordinates
     print(world.ds) 
 
-
 Further tutorials are available at [GitHub tutorials](https://github.com/TobbeTripitaka/agrid/tree/master/tutorials) 
-
 
 
 \---
@@ -69,7 +63,6 @@ If used in publication, please cite:
 
     @article{Staal2020a,
     abstract = {Researchers use 2D and 3D spatial models of multivariate data of differing resolutions and formats. It can be challenging to work with multiple datasets, and it is time consuming to set up a robust, performant grid to handle such spatial models. We share 'agrid', a Python module which provides a framework for containing multidimensional data and functionality to work with those data. The module provides methods for defining the grid, data import, visualisation, processing capability and export. To facilitate reproducibility, the grid can point to original data sources and provides support for structured metadata. The module is written in an intelligible high level programming language, and uses well documented libraries as numpy, xarray, dask and rasterio.},
-
     author = {St{\aa}l, Tobias and Reading, Anya M.},
     doi = {10.5334/JORS.287},
     issn = {20499647},
