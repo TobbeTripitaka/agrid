@@ -109,11 +109,13 @@ class Grid(object):
         up ; y or lat coordinate to define upper extent
         right : x or lon coordinate to define right extent
         down ; y or lat coordinate to define exrtent down
+        depths : float, integer or list of depths slices
 
         '''
 
         # res given as [x,y]
         self.res = list(res)
+
 
         if isinstance(depths, (int, float)):
             depths = [depths]
