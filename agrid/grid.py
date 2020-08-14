@@ -495,8 +495,12 @@ class Grid(object):
 
     # Import data
 
-    def assign_shape(self, f_name, attribute=None,
-                     z_dim=False, z_max='z_max', z_min='z_min',
+    def assign_shape(self, 
+                     f_name, 
+                     attribute=None,
+                     z_dim=False, 
+                     z_max='z_max', 
+                     z_min='z_min',
                      all_touched=True,
                      burn_val=None,
                      map_to_int=True,
