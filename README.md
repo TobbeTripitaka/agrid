@@ -49,7 +49,7 @@ See example in the Jupyter Notebook agrid.
 
 To get started:
 
-    from agrid import Grid
+    from agrid.grid import Grid
     world = Grid()
     # The grid is already populated with default coordinates
     print(world.ds) 

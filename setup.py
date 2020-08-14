@@ -15,7 +15,7 @@ requirements = [
 
 setuptools.setup(
     name='agrid', 
-    version="0.3.8.2",
+    version="0.3.9.1",
     author="Tobias Staal",
     author_email="tobbetripitaka@gmail.com",
     description='A grid for spatial multidimensional processing',
@@ -40,4 +40,3 @@ setuptools.setup(
 # conda skeleton pypi agrid      
 # conda-build agrid  
 # anaconda upload /Users/tobias_stal/anaconda3/conda-bld/osx-64/agrid-0.3.8.2-py37_0.tar.bz2
- 
