@@ -16,10 +16,10 @@ Here are a few tutorials that hopefully will explain the grid in particular, and
   
  - 5 Export
  
- - JORS Copy of code to generate figures in meta-paper (In prep.). 
+ - JORS Copy of code to generate figures in meta-paper: (Stål and Reading, JORS (2020). 
  
  Special features:
  
- - S1 Processing and visualisation for Staal et al (in prep.)
+ - S1 Processing and visualisation for Staal et al (2020)
  
- - S2 Import and conversion of data for Morse et al (in prep.)
+ - S2 Import and conversion of data for Morse et al, (2019)
