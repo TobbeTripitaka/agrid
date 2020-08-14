@@ -3,8 +3,8 @@
 .sconsign.dblite
 
 #Not needed
-data/*
-local/*
+data/
+local/
 
 .ipynb_checkpoints/
 __pycache__/
@@ -23,10 +23,10 @@ tex/*
 *.pyc
 
 # Setuptools 
-dist/*
-build/*
-agrid.egg-info/*
-agrid/bin/*
-agrid/lib/*
+dist/
+build/
+agrid.egg-info/
+agrid/bin/
+agrid/lib/
 agrid/pyvenv.cfg
 
