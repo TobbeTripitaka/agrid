@@ -110,6 +110,10 @@ class Grid(object):
         right : x or lon coordinate to define right extent
         down ; y or lat coordinate to define exrtent down
         depths : float, integer or list of depths slices
+        res : resolution is the unit of crs, e.g. degrees or meters
+        center : Place coordinates in center of grid cell
+        is_huge : stops creations of crits larger than this number, 
+            to avoid mistakes when defining grid size
 
         '''
 
