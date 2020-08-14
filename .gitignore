@@ -8,4 +8,6 @@
 !.gitignore
 !.gitattributes
 !tutorials/
+
+agrid/*
 !agrid/*.py
