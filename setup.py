@@ -31,3 +31,13 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
 )
+
+# python3 setup.py sdist bdist_wheel   
+# twine upload dist/*
+# virtualenv agrid      
+# pip install agrid
+# pip freeze > requirements.txt   
+# conda skeleton pypi agrid      
+# conda-build agrid  
+# anaconda upload /Users/tobias_stal/anaconda3/conda-bld/osx-64/agrid-0.3.8.2-py37_0.tar.bz2
+ 
