@@ -9,4 +9,3 @@
 !.gitattributes
 !tutorials/*.ipynb
 !agrid/*.py
-!data/ant.json

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 # Tobias Staal 2020
-# tobias.staal@utas.edu.au
-# version = '0.3.9'
+# tobias.staal@utas.edu.au tobbetripitaka@gmail.com
+# version = '0.3.9.2'
 
 # https://doi.org/10.5281/zenodo.2553966
 #
@@ -73,9 +73,6 @@ import cartopy.crs as ccrs
 ###
 # Mayavi is imported in methods, when needed.
 
-km = 1000
-
-
 class Grid(object):
     '''
     Methods to set up, save and modify a multidimensional grid.
@@ -114,6 +111,8 @@ class Grid(object):
         center : Place coordinates in center of grid cell
         is_huge : stops creations of crits larger than this number, 
             to avoid mistakes when defining grid size
+        use_dask : set to true to contaon dask arrays instead of numpy array
+        chunk_n
 
         '''
 
@@ -146,9 +145,9 @@ class Grid(object):
             self.nx = int(abs(right - left) // res[0])
             self.ny = int(abs(down - up) // res[1])
             self.nn = (self.ny, self.nx)
+            self.nnn = (self.ny, self.nx, len(self.depths))
         except ZeroDivisionError:
         	print('Cell size (%s, %s) is larger than grid. Choose a smaller cell size or larger grid extent.' %res)
-
 
         if self.nx > is_huge or self.ny > is_huge:
             raise Exception('The array is too large:', self.nn)
@@ -235,7 +234,8 @@ class Grid(object):
             print('Class nx ny', self.nx, self.ny, )
             print('Depths:', depths)
 
-    # Accessories
+    # Help functions:
+    
     def _check_if_in(self, xx, yy, margin=2):
         '''Generate an array of the condition that coordinates
         are within the model or not.
