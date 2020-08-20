@@ -75,5 +75,4 @@ If used in publication, please cite:
     title = {{A grid for multidimensional and multivariate spatial representation and data processing}},
     volume = {8},
     year = {2020}
-
-  }
+    }
