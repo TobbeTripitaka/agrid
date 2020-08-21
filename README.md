@@ -56,6 +56,22 @@ To get started:
 
 Further tutorials are available at [GitHub tutorials](https://github.com/TobbeTripitaka/agrid/tree/master/tutorials) 
 
+## Methods to import data
+
+Data can be imported from grids, vector data files, rasters or numerically. 
+
+
+## Methods to export data
+
+Data can be exported and saved as netCDF, raster files, text files. 
+
+## Methods to visualise data
+
+Visualisation is not the core use of agrid, but it contains basic functions to plot maps and 3D renderings. 
+
+## Additional functions
+
+Additional functions are included to download data and structure the content.  
 
 \---
 
