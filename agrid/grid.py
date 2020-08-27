@@ -150,7 +150,7 @@ class Grid(object):
         	print('Cell size (%s, %s) is larger than grid. Choose a smaller cell size or larger grid extent.' %res)
 
         if self.nx > is_huge or self.ny > is_huge:
-            raise Exception('The array is too large:', self.nn)
+            raise Exception('The array is too large:', self.nn, 'Define a smaller grid or incrase the parameter "is_huge"')
 
         # Dask
         self.use_dask = use_dask
