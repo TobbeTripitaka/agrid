@@ -6,6 +6,10 @@ with open("README.md", "r") as fh:
 
 requirements = [
 'Cartopy>=0.17.0',
+'dask>=2.5.1',
+'numpy>=1.17.2'
+'tqdm>=4.36.1',
+'requests>=2.22.0',
 'geopandas>=0.6.1',
 'imageio>=2.6.0',
 'rasterio>=1.0.21',
@@ -15,7 +19,7 @@ requirements = [
 
 setuptools.setup(
     name='agrid', 
-    version="0.3.9.2",
+    version="0.3.9.6",
     author="Tobias Staal",
     author_email="tobbetripitaka@gmail.com",
     description='A grid for spatial multidimensional processing',
@@ -31,12 +35,3 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
 )
-
-# python3 setup.py sdist bdist_wheel   
-# twine upload dist/*
-# virtualenv agrid      
-# pip install agrid
-# pip freeze > requirements.txt   
-# conda skeleton pypi agrid      
-# conda-build agrid  
-# anaconda upload /Users/tobias_stal/anaconda3/conda-bld/osx-64/agrid-0.3.8.2-py37_0.tar.bz2

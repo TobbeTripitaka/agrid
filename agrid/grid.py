@@ -80,6 +80,7 @@ class Grid(object):
 
     # Swich for print statements
     verbose = False
+    km = 1000
 
     def __init__(self,
                  km=km,
