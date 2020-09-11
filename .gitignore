@@ -2,7 +2,6 @@
 *
 
 # Except (!)
-!requirements.txt
 !README.md
 !LICENSE
 !.gitignore
