@@ -75,7 +75,7 @@ Additional functions are included to download data and structure the content.
 
 \---
 
-If used in publication, please cite:
+If used in publication, please consider to cite:
 
     @article{Staal2020a,
     abstract = {Researchers use 2D and 3D spatial models of multivariate data of differing resolutions and formats. It can be challenging to work with multiple datasets, and it is time consuming to set up a robust, performant grid to handle such spatial models. We share 'agrid', a Python module which provides a framework for containing multidimensional data and functionality to work with those data. The module provides methods for defining the grid, data import, visualisation, processing capability and export. To facilitate reproducibility, the grid can point to original data sources and provides support for structured metadata. The module is written in an intelligible high level programming language, and uses well documented libraries as numpy, xarray, dask and rasterio.},
