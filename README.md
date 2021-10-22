@@ -7,7 +7,7 @@ A grid for modelling, analyse, map and visualise multidimensional and multivaria
 
 Main features:
   - Labelled dimensions coordinates using xarray
-  - Fast process of high resolution and low resolution data
+  - Fast processing of high resolution and low resolution data
   - Using dask arrays
   - 2D map plots and cross-sections
   - 3D visualisation
@@ -32,7 +32,7 @@ The package can be installed by adding it to your Python path, but can also be a
 Using pip: 
 `pip install agrid` or `pip3 install agrid`
 
-Set up an envirinment for the installation. Use e.g. [virtualenv](https://virtualenv.pypa.io/en/latest/) or [venv](https://docs.python.org/3/library/venv.html) to set up your environment. For more complex isnallations, have a look at [pipenv](https://pipenv.readthedocs.io/en/latest/) or [poetry](https://poetry.eustace.io). 
+Set up an environment for the installation. Use e.g. [virtualenv](https://virtualenv.pypa.io/en/latest/) or [venv](https://docs.python.org/3/library/venv.html) to set up your environment. For more complex isnallations, have a look at [pipenv](https://pipenv.readthedocs.io/en/latest/) or [poetry](https://poetry.eustace.io). 
 
 OSX users can set up an environment directely in conda. 
 
